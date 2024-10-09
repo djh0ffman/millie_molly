@@ -46,17 +46,8 @@ Restart:
 
     move.w      #BASE_DMA,DMACON(a6)
 
-    ; test tile blit
-    WAITBLIT
-    move.l      #$9f0<<16,BLTCON0(a6)
-    move.l      #-1,BLTAFWM(a6)
-    move.l      #TestTile,BLTAPT(a6)
-    move.l      #ScreenMem,BLTDPT(a6)
-    move.w      #0,BLTAMOD(a6)
-    move.w      #TILE_BLT_MOD,BLTDMOD(a6)
-    move.w      #TILE_BLT_SIZE,BLTSIZE(a6)
-
     ; exit!
+    bsr         FillScreen
 
 .forever
     bra         .forever
@@ -64,6 +55,61 @@ Restart:
 TILE_BLT_MOD  = SCREEN_WIDTH_BYTE-4
 TILE_BLT_SIZE = ((24*SCREEN_DEPTH)<<6)+2
 
+FillScreen:
+    moveq       #28,d2                        ; tile id
+
+    moveq       #0,d1                         ; y
+.yloop
+    move        #0,d0
+.xloop    
+    bsr         DrawTile
+    add.w       #TILE_WIDTH,d0
+    cmp.w       #SCREEN_WIDTH,d0
+    bcs         .xloop
+
+    add.w       #TILE_HEIGHT,d1
+    cmp.w       #SCREEN_HEIGHT,d1
+    bcs         .yloop
+    rts
+
+; d0 = x
+; d1 = y
+; d2 = tile id
+
+DrawTile:
+    PUSHM       d0-d2
+
+    lea         Tileset,a0
+    lea         ScreenMem,a1
+
+    mulu        #TILE_SIZE,d2
+    add.w       d2,a0                         ; tile graphic
+
+    mulu        #SCREEN_STRIDE,d1
+    move.w      d0,d2
+    asr.w       #3,d2
+    add.w       d2,d1    
+    add.l       d1,a1                         ; screen position
+
+    and.w       #$f,d0                        ; shift
+    ror.w       #4,d0 
+    or.w        #$dfc,d0                      ; minterm
+
+    ; test tile blit
+    WAITBLIT
+    move.w      d0,BLTCON0(a6)
+    move.w      #0,BLTCON1(a6)
+    move.l      #-1,BLTAFWM(a6)
+    move.l      a0,BLTAPT(a6)
+    move.l      a1,BLTBPT(a6)
+    move.l      a1,BLTDPT(a6)
+    move.w      #0,BLTAMOD(a6)
+    move.w      #TILE_BLT_MOD,BLTBMOD(a6)
+    move.w      #TILE_BLT_MOD,BLTDMOD(a6)
+    move.w      #TILE_BLT_SIZE,BLTSIZE(a6)
+
+    POPM        d0-d2
+    rts
 
 
 CopperInit:
@@ -90,12 +136,29 @@ CopperInit:
     rts
 
 
+
+;----------------------------------------------
+;  LoadLevel
+;
+; d0 = level id
+;----------------------------------------------
+
+LoadLevel:
+    lea         LevelData,a0
+    mulu        #MAP_SIZE,d0
+    add.w       d0,a0
+    lea         GameMap(a5),a1
+    moveq       #MAP_SIZE-1,d7
+.copy
+    move.b      (a0)+,(a1)+
+    dbra        d7,.copy
+    rts    
+
+
 ;----------------------------------------------
 ;  includes!
 ;----------------------------------------------
 
-
-    incdir      "data"
 
 
 ;----------------------------------------------
@@ -106,7 +169,8 @@ CopperInit:
 
 TestPal:
     incbin      "assets/pal.bin"
-
+LevelData:
+    incbin      "assets/Levels/levels.bin"
 
 ;----------------------------------------------
 ;  data chip
@@ -117,7 +181,10 @@ TestPal:
     include     "copperlists.asm"
 
 TestTile:
-    incbin      "assets/Tiles/tile_09.raw"
+
+
+Tileset:
+    incbin      "assets/Tiles/tiles_0.bin"
 
 ;----------------------------------------------
 ;   mem fast

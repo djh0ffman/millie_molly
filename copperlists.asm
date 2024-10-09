@@ -4,12 +4,13 @@
 ;-----------------------------------------------
 
 cpTest:
-    dc.w    $01fc,$0000           ;Slow fetch mode, remove if AGA demo.
-    dc.w    DIWSTRT,$2c81         ;238h display window top, left
-    dc.w    DIWSTOP,$2cc1         ;and bottom, right.
-    dc.w    DDFSTRT,$0038         ;Standard bitplane dma fetch start
-    dc.w    DDFSTOP,$00d0         ;and stop for standard screen.
-    dc.w    BPLCON0,$5200         ; 5 plane display
+    dc.w    $01fc,$0000             ;Slow fetch mode, remove if AGA demo.
+
+    dc.w    DIWSTRT,WINDOW_START    ; $2c81                                                  ;238h display window top, left
+    dc.w    DIWSTOP,WINDOW_STOP     ;$2cc1                                                  ;and bottom, right.
+    dc.w    DDFSTRT,FETCH_START     ;Standard bitplane dma fetch start
+    dc.w    DDFSTOP,FETCH_STOP      ;and stop for standard screen.
+    dc.w    BPLCON0,$5200           ; 5 plane display
     dc.w    BPLCON1,$0000
     dc.w    BPL1MOD,SCREEN_MOD
     dc.w    BPL2MOD,SCREEN_MOD

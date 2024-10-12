@@ -3,16 +3,47 @@
 ;-----------------------------------------------
 
 DrawMap:
-    bsr           WallPaperInit
-    bsr           FillScreen
+    bsr           LevelInit
+    bsr           DrawWalls
     bsr           DrawLadders
     bsr           DrawShadows
+    ; base restore screen created
+    bsr           CopySaveToStatic
+    bsr           DrawPlayers
+    bsr           DrawStaticActors
+    bsr           CopyStaticToBuffers
+
     rts
 
-WallPaperInit:
-    lea           ScreenMem,a0
+CopyStaticToBuffers:
+    lea           ScreenStatic,a0
+    lea           Screen1,a1
+    lea           Screen1,a2
+    move.w        #(SCREEN_SIZE/4)-1,d7
+.copy
+    move.l        (a0)+,d0
+    move.l        d0,(a1)+
+    move.l        d0,(a2)+
+    dbra          d7,.copy
+    rts
+
+
+CopySaveToStatic:
+    lea           ScreenSave,a0
+    lea           ScreenStatic,a1
+    move.w        #(SCREEN_SIZE/4)-1,d7
+.copy
+    move.l        (a0)+,(a1)+
+    dbra          d7,.copy
+    rts
+
+LevelInit:
+    lea           ScreenSave,a0
     move.l        #SCREEN_SIZE,d7
     bsr           TurboClear
+
+    clr.w         Millie+Player_Status(a5)
+    clr.w         Molly+Player_Status(a5)
 
     bsr           SetLevelAssets
 
@@ -56,10 +87,14 @@ SetLevelAssets:
     addq.l        #4,a1
     dbra          d7,.cloop2
 
-    mulu          #TILESET_SIZE,d4
-    add.l         #Tiles0,d4
-    move.l        d4,TilesetPtr(a5)
-
+    add.w         d4,d4
+    add.w         d4,d4
+    lea           TileAssets,a0
+    move.l        (a0,d4.w),a0                         ; source packed
+    lea           TileSet,a1
+    move.l        a1,TilesetPtr(a5)
+    bsr           zx0_decompress
+    
     rts
 
 WallPaperLoadLevel:
@@ -267,13 +302,13 @@ WallDespatch:
 
     cmp.w         #2,d0
     bne           .long
-    move.b        #1,(a1)+
-    move.b        #8,(a1)+
+    move.b        #TILE_WALLLEFT,(a1)+
+    move.b        #TILE_WALLRIGHT,(a1)+
     moveq         #0,d0
     rts
 .long
     subq.w        #2,d0
-    move.b        #1,(a1)+
+    move.b        #TILE_WALLLEFT,(a1)+
 .fill
     PUSH          d0
     RANDOMWORD
@@ -282,19 +317,19 @@ WallDespatch:
     POP           d0 
     divu          #6,d2
     swap          d2
-    add.w         #2,d2
+    add.w         #TILE_WALLA,d2
 
     move.b        d2,(a1)+                             ; random chars
     subq.w        #1,d0
     bne           .fill
-    move.b        #8,(a1)+
+    move.b        #TILE_WALLRIGHT,(a1)+
     rts
 .isone
-    move.b        #0,(a1)+
+    move.b        #TILE_WALLSINGLE,(a1)+
     moveq         #0,d0
     rts
 .zero
-    move.b        #28,(a1)+
+    move.b        #TILE_BACK,(a1)+
     rts
 
 .fullrandom
@@ -339,7 +374,7 @@ WallPaperLoadBase:
     lea           WallpaperCheat(a5),a0
     moveq         #WALL_PAPER_WIDTH-1,d7
 .cheat
-    move.b        #28,(a0)+
+    move.b        #TILE_BACK,(a0)+
     dbra          d7,.cheat
     rts
 
@@ -354,7 +389,7 @@ DrawSprite:
 
     lea           Sprites,a0
     lea           SpriteMask,a2
-    lea           ScreenMem,a1
+    lea           ScreenStatic,a1
 
     mulu          #TILE_SIZE,d2
     add.l         d2,a0                                ; tile graphic
@@ -425,7 +460,6 @@ GenSpriteMask:
     move.l        d0,(a1)+
     move.l        d0,(a1)+
     dbra          d7,.nexttile
-    lea           ScreenMem,a2
     rts
 
 
@@ -445,7 +479,6 @@ GenTileMask:
     move.l        d0,(a1)+
     move.l        d0,(a1)+
     dbra          d7,.nexttile
-    lea           SpriteMask,a0
     rts
 
 
@@ -455,7 +488,7 @@ SHADOW_BLT_SIZE = ((24)<<6)+2
 TILE_BLT_MOD    = SCREEN_WIDTH_BYTE-4
 TILE_BLT_SIZE   = ((24*SCREEN_DEPTH)<<6)+2
 
-FillScreen:
+DrawWalls:
     lea           WallpaperWork(a5),a4
     moveq         #28,d2                               ; tile id
 
@@ -485,6 +518,7 @@ DrawLadders:
     moveq         #0,d2
     move.b        (a4)+,d2                             ; tile id
     beq           .skip
+    lea           ScreenSave,a1
     bsr           PasteTile
 .skip
     add.w         #TILE_WIDTH,d0
@@ -534,7 +568,7 @@ ShadowTile:
     lea           Shadows,a0
     add.w         d2,a0
 
-    lea           ScreenMem,a1
+    lea           ScreenSave,a1
 
     mulu          #SCREEN_STRIDE,d1
     move.w        d0,d2
@@ -595,7 +629,7 @@ DrawTile:
     PUSHM         d0-d2
 
     move.l        TilesetPtr(a5),a0
-    lea           ScreenMem,a1
+    lea           ScreenSave,a1
 
     mulu          #TILE_SIZE,d2
     add.w         d2,a0                                ; tile graphic
@@ -629,13 +663,13 @@ DrawTile:
 ; d0 = x
 ; d1 = y
 ; d2 = tile id
-
+; a1 screen buffer!
 PasteTile:
     PUSHM         d0-d2
 
     move.l        TilesetPtr(a5),a0
     lea           TileMask,a2
-    lea           ScreenMem,a1
+
 
     mulu          #TILE_SIZE,d2
     add.w         d2,a0                                ; tile graphic

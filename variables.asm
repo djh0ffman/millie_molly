@@ -15,5 +15,9 @@ PlayerPtrs:          rs.l       2
 Millie:              rs.b       Player_Sizeof
 Molly:               rs.b       Player_Sizeof
 GameStatus:          rs.w       1
+ScreenPtrs:          rs.l       2
+SpritePtrs:          rs.l       8
+ActorCount:          rs.w       1
+Actors:              rs.b       Actor_Sizeof*MAX_ACTORS
 
 Variables_sizeof:    rs.w       0

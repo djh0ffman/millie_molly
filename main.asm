@@ -66,7 +66,20 @@ LevelTest:
 .draw
     bsr        DrawMap
 
+.nof2
+    rts
+
+DrawPlayers:
     lea        Millie(a5),a4
+    ;bsr        DrawPlayer
+    bsr        ShowSprite
+    lea        Molly(a5),a4
+    bsr        DrawPlayer
+    rts
+
+DrawPlayer:
+    tst.w      Player_Status(a4)
+    beq        .exit
     moveq      #0,d0
     moveq      #0,d1
     move.w     Player_X(a4),d0
@@ -74,12 +87,10 @@ LevelTest:
     mulu       #24,d0
     mulu       #24,d1
     moveq      #0,d2
+    add.w      Player_SpriteOffset(a4),d2
     bsr        DrawSprite
-.nof2
+.exit
     rts
-
-
-
     
 Init:
     bsr        KeyboardInit
@@ -88,6 +99,7 @@ Init:
     move.l     #cpTest,COP1LC(a6)
     move.w     #0,COPJMP1(a6)
 
+    move.l     #-1,ScreenMemEnd
     move.w     #BASE_DMA,DMACON(a6)
 
     move.w     #START_LEVEL,LevelId(a5)
@@ -128,7 +140,12 @@ VBlankTick:
 
 
 CopperInit:
-    move.l     #ScreenMem,d0
+    move.l     #Screen1,ScreenPtrs(a5)
+    move.l     #Screen2,ScreenPtrs+4(a5)
+
+    bsr        ClearSprites
+
+    move.l     #ScreenStatic,d0
     lea        cpPlanes,a0
     moveq      #SCREEN_DEPTH-1,d7
 .ploop
@@ -150,7 +167,18 @@ CopperInit:
 
     rts
 
-
+ClearSprites:
+    lea        cpSprites,a0
+    move.l     #NullSprite,d0
+    moveq      #8-1,d7
+.loop
+    move.w     d0,6(a0)
+    swap       d0
+    move.w     d0,2(a0)
+    swap       d0
+    add.l      #8,a0
+    dbra       d7,.loop
+    rts
 
 
 
@@ -162,12 +190,16 @@ CopperInit:
     include    "tools.asm"
     include    "mapstuff.asm"
     include    "actors.asm"
+    include    "zx0_faster.asm"
+    include    "spritetools.asm"
 
 ;----------------------------------------------
 ;  data fast
 ;----------------------------------------------
 
     section    data_fast,data
+
+    include    "assets.asm"
 
 SpritePal:
     incbin     "assets/sprites.pal"
@@ -202,22 +234,14 @@ WallpaperBase:
 
     include    "copperlists.asm"
 
+RealSprites:
+    incbin     "assets/realsprites.bin"
+
 Sprites:
     incbin     "assets/sprites.bin"
 Shadows:
     incbin     "assets/shadows.bin"
 
-
-Tiles0:
-    incbin     "assets/Tiles/tiles_0.bin"
-Tiles1:
-    incbin     "assets/Tiles/tiles_1.bin"
-Tiles2:
-    incbin     "assets/Tiles/tiles_2.bin"
-Tiles3:
-    incbin     "assets/Tiles/tiles_3.bin"
-Tiles4:
-    incbin     "assets/Tiles/tiles_4.bin"
 
 
 ;----------------------------------------------
@@ -247,14 +271,28 @@ AllFastEnd:
     section    mem_chip,bss_c
 AllChip:
 
+NullSprite:    
+    ds.l       0,0
+
+TileSet:
+    ds.b       TILESET_SIZE
 TileMask:
     ds.b       TILESET_SIZE
 SpriteMask:
     ds.b       SPRITESET_SIZE
 
-ScreenMem
+Screen1:
+    ds.b       SCREEN_SIZE
+Screen2:
     ds.b       SCREEN_SIZE
 
+ScreenStatic:
+    ds.b       SCREEN_SIZE
+
+ScreenSave:
+    ds.b       SCREEN_SIZE
+
+ScreenMemEnd:
     ds.b       200
 
 AllChipEnd:

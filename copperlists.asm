@@ -12,6 +12,7 @@ cpTest:
     dc.w    DDFSTOP,FETCH_STOP      ;and stop for standard screen.
     dc.w    BPLCON0,$5200           ; 5 plane display
     dc.w    BPLCON1,$0000
+    dc.w    BPLCON2,$0024
     dc.w    BPL1MOD,SCREEN_MOD
     dc.w    BPL2MOD,SCREEN_MOD
 cpPlanes:
@@ -25,6 +26,24 @@ cpPlanes:
     dc.w    BPL4PTL,0
     dc.w    BPL5PTH,0
     dc.w    BPL5PTL,0
+
+cpSprites:
+    dc.w    SPR0PTH,0
+    dc.w    SPR0PTL,0
+    dc.w    SPR1PTH,0
+    dc.w    SPR1PTL,0
+    dc.w    SPR2PTH,0
+    dc.w    SPR2PTL,0
+    dc.w    SPR3PTH,0
+    dc.w    SPR3PTL,0
+    dc.w    SPR4PTH,0
+    dc.w    SPR4PTL,0
+    dc.w    SPR5PTH,0
+    dc.w    SPR5PTL,0
+    dc.w    SPR6PTH,0
+    dc.w    SPR6PTL,0
+    dc.w    SPR7PTH,0
+    dc.w    SPR7PTL,0
 
 cpPal:
     dc.w    COLOR00,$00f

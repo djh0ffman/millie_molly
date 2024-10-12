@@ -10,7 +10,10 @@ Player_Sizeof:          rs.w       0
 Actor_Status:           rs.w       1
 Actor_X:                rs.w       1
 Actor_Y:                rs.w       1
+Actor_Type:             rs.w       1
 Actor_SpriteOffset:     rs.w       1
+Actor_CanFall:          rs.w       1
+Actor_Static:           rs.w       1
 Actor_Sizeof:           rs.w       0
 
                         RSRESET

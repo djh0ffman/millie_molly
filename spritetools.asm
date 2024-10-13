@@ -18,19 +18,16 @@ ShowSprite:
     mulu      #24,d1
     mulu      #24,d2
 
-    moveq     #0,d0
-    move.w    LevelId(a5),d0
-    divu      #48,d0
-    clr.w     d0
-    swap      d0
-    ;move.w    Player_SpriteOffset(a4),d0
+    move.w    Player_SpriteOffset(a4),d0
+    add.w     Player_AnimFrame(a4),d0
+
     mulu      #SPRITE_SIZE*4,d0
     lea       RealSprites,a0
     add.l     d0,a0
 
     move.w    #$80,d5
     swap      d5
-    move.w    #TILE_HEIGHT,d5         ; height
+    move.w    #TILE_HEIGHT,d5               ; height
 
     move.l    a0,SpritePtrs(a5)                      
 
@@ -43,7 +40,7 @@ ShowSprite:
 
     move.w    #$80,d5
     swap      d5
-    move.w    #TILE_HEIGHT,d5         ; height
+    move.w    #TILE_HEIGHT,d5               ; height
 
     bsr       SpriteCoord
 
@@ -53,7 +50,7 @@ ShowSprite:
 
     move.w    #$80,d5
     swap      d5
-    move.w    #TILE_HEIGHT,d5         ; height
+    move.w    #TILE_HEIGHT,d5               ; height
 
     move.l    a0,SpritePtrs+4(a5)               
 
@@ -65,7 +62,7 @@ ShowSprite:
 
     move.w    #$80,d5
     swap      d5
-    move.w    #TILE_HEIGHT,d5         ; height
+    move.w    #TILE_HEIGHT,d5               ; height
     bsr       SpriteCoord
 
 
@@ -112,23 +109,23 @@ SpriteCoord:
     move.l    d1,d4
     swap      d4
     lsr.l     #1,d4
-    rol.w     #1,d4                   ; H START
+    rol.w     #1,d4                         ; H START
 
     move.l    d2,d3
     lsl.l     #8,d3
     swap      d3
     lsl.w     #2,d3
-    or.l      d3,d4                   ; V START ( lower bits )
+    or.l      d3,d4                         ; V START ( lower bits )
 
     move.l    d2,d3
     ;add.w         #18,d3                                                     ; Height
-    add.w     d5,d3                   ; height
+    add.w     d5,d3                         ; height
     rol.w     #8,d3
     lsl.b     #1,d3
-    or.l      d3,d4                   ; V STOP ( lower bits )
+    or.l      d3,d4                         ; V STOP ( lower bits )
 
     swap      d5
-    or.b      d5,d4                   ; attach bit
+    or.b      d5,d4                         ; attach bit
     
     move.l    d4,(a0)
     POPM      d1/d2

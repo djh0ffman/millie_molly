@@ -2,7 +2,7 @@
 InitGameObjects:
     clr.w       ActorCount(a5)
 
-    lea         GameMap+WALL_PAPER_WIDTH(a5),a0
+    lea         GameMap(a5),a0
     moveq       #0,d1                                       ; x
     moveq       #0,d2                                       ; y
 .nextcell
@@ -78,13 +78,17 @@ InitPushBlock:
 
 InitMillie:
     lea         Millie(a5),a4
-    move.w      #0,Player_SpriteOffset(a4)
+    move.w      #48,Player_SpriteOffset(a4)
+    move.b      #BLOCK_MILLIESTART,Player_BlockId(a4)
+    move.b      #BLOCK_MILLIELADDER,Player_LadderId(a4)
     bsr         InitPlayer
     rts
 
 InitMolly:
     lea         Molly(a5),a4
-    move.w      #48,Player_SpriteOffset(a4)
+    move.w      #0,Player_SpriteOffset(a4)
+    move.b      #BLOCK_MOLLYSTART,Player_BlockId(a4)
+    move.b      #BLOCK_MOLLYLADDER,Player_LadderId(a4)
     bsr         InitPlayer
     rts
 
@@ -92,6 +96,7 @@ InitPlayer:
     move.w      d1,Player_X(a4)
     move.w      d2,Player_Y(a4)
     move.w      #1,Player_Status(a4)
+    move.w      #1,Player_DirectionX(a4)
     rts
 
 

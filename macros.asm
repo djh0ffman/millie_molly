@@ -156,3 +156,10 @@ ROTATE_LONG        MACRO
                    endif
 
                    ENDM
+
+KeyTest            MACRO
+                   tst.b      (\1,a0)
+                   beq.b      .\@notpressed
+                   bset       #\2,d0
+.\@notpressed
+                   ENDM

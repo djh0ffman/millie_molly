@@ -2,7 +2,8 @@
                      rsreset
 LevelId:             rs.w       1
 LevelPtr:            rs.l       1
-GameMap:             rs.b       WALL_PAPER_SIZE+WALL_PAPER_WIDTH
+GameMapCeiling:      rs.b       WALL_PAPER_WIDTH
+GameMap:             rs.b       WALL_PAPER_SIZE
 WallpaperCheat:      rs.b       WALL_PAPER_WIDTH
 WallpaperWork:       rs.b       WALL_PAPER_SIZE
 RandomSeed:          rs.l       1
@@ -19,5 +20,10 @@ ScreenPtrs:          rs.l       2
 SpritePtrs:          rs.l       8
 ActorCount:          rs.w       1
 Actors:              rs.b       Actor_Sizeof*MAX_ACTORS
+TickCounter:         rs.w       1
+ControlsTrigger:     rs.b       1 
+ControlsHold:        rs.b       1 
+PlayerMoved:         rs.w       1
+LevelComplete:       rs.w       1
 
 Variables_sizeof:    rs.w       0

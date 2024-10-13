@@ -43,11 +43,16 @@ Restart:
     bsr        Init
 
     bsr        DrawMap
-
 .forever
     bra        .forever
 
 LevelTest:
+    tst.w      LevelComplete(a5)
+    beq        .nope
+    addq.w     #1,LevelId(a5)
+    bra        .draw
+
+.nope
     lea        Keys,a0
     tst.b      KEY_F1(a0)
     beq        .nof1
@@ -121,8 +126,17 @@ VBlankTick:
     move.w     d1,INTREQ(a6)
     move.w     d1,INTREQ(a6)                                              ; twice to avoid a4k hw bug
 
-    bsr        LevelTest
+    addq.w     #1,TickCounter(a5)
 
+    bsr        LevelTest
+    ;bsr        DrawPlayers
+
+    bsr        UpdateControls
+
+    lea        Millie(a5),a4
+    bsr        PlayerLogic
+    lea        Molly(a5),a4
+    bsr        PlayerLogic
     ;bra        .exit
 
 .novertb
@@ -192,6 +206,8 @@ ClearSprites:
     include    "actors.asm"
     include    "zx0_faster.asm"
     include    "spritetools.asm"
+    include    "player.asm"
+    include    "controls.asm"
 
 ;----------------------------------------------
 ;  data fast

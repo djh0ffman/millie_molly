@@ -3,7 +3,15 @@
 Player_Status:          rs.w       1
 Player_X:               rs.w       1
 Player_Y:               rs.w       1
+Player_NextX:           rs.w       1
+Player_NextY:           rs.w       1
 Player_SpriteOffset:    rs.w       1
+Player_AnimFrame:       rs.w       1
+Player_DirectionX:      rs.w       1
+Player_DirectionY:      rs.w       1
+Player_Ladder:          rs.w       1
+Player_BlockId:         rs.b       1
+Player_LadderId:        rs.b       1
 Player_Sizeof:          rs.w       0
 
                         RSRESET

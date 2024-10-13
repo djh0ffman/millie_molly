@@ -3,13 +3,14 @@
 ;-----------------------------------------------
 
 DrawMap:
+    clr.w         LevelComplete(a5)
     bsr           LevelInit
     bsr           DrawWalls
     bsr           DrawLadders
     bsr           DrawShadows
     ; base restore screen created
     bsr           CopySaveToStatic
-    bsr           DrawPlayers
+    ;bsr           DrawPlayers
     bsr           DrawStaticActors
     bsr           CopyStaticToBuffers
 
@@ -115,7 +116,7 @@ WallPaperLoadLevel:
     dbra          d7,.line
 
     move.l        LevelPtr(a5),a0
-    lea           GameMap+WALL_PAPER_WIDTH+1(a5),a1
+    lea           GameMap+1(a5),a1
     moveq         #MAP_HEIGHT-1,d7
 .line2
     moveq         #MAP_WIDTH-1,d6
@@ -350,7 +351,7 @@ WallDespatch:
 
 WallPaperLoadBase:
     lea           WallpaperBaseTop,a0
-    lea           GameMap(a5),a1
+    lea           GameMapCeiling(a5),a1
     move.w        #GAME_MAP_SIZE-1,d7
 .game
     move.b        (a0)+,(a1)+

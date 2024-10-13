@@ -40,6 +40,8 @@ BLOCK_SOLID        = 5
 BLOCK_ENEMYFLOAT   = 6
 BLOCK_MILLIESTART  = 7
 BLOCK_MOLLYSTART   = 8
+BLOCK_MILLIELADDER = 9
+BLOCK_MOLLYLADDER  = 10
 
 TILE_WIDTH         = 24
 TILE_HEIGHT        = 24
@@ -100,3 +102,21 @@ KEY_F7             = $56
 KEY_F8             = $57
 KEY_F9             = $58
 KEY_F10            = $59
+
+;    bit 4 = Fire / Space
+;    bit 3 = Right
+;    bit 2 = Left
+;    bit 1 = Down
+;    bit 0 = Up
+
+CONTROLB_UP        = 0
+CONTROLB_DOWN      = 1
+CONTROLB_LEFT      = 2
+CONTROLB_RIGHT     = 3
+CONTROLB_FIRE      = 4
+
+CONTROLF_UP        = 1<<0
+CONTROLF_DOWN      = 1<<1
+CONTROLF_LEFT      = 1<<2
+CONTROLF_RIGHT     = 1<<3
+CONTROLF_FIRE      = 1<<4

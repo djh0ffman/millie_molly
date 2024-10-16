@@ -43,6 +43,7 @@ Restart:
     bsr        Init
 
     bsr        DrawMap
+    bsr        StartVBlank
 .forever
     bra        .forever
 
@@ -70,7 +71,6 @@ LevelTest:
     addq.w     #1,LevelId(a5)
 .draw
     bsr        DrawMap
-
 .nof2
     rts
 
@@ -109,9 +109,11 @@ Init:
 
     move.w     #START_LEVEL,LevelId(a5)
 
+    rts
+
+StartVBlank:
     move.l     #VBlankTick,$6c
     move.w     #INTF_SETCLR|INTF_VERTB|INTF_COPER,INTENA(a6)
-
     rts
 
 VBlankTick:
@@ -133,9 +135,7 @@ VBlankTick:
 
     bsr        UpdateControls
 
-    lea        Millie(a5),a4
-    bsr        PlayerLogic
-    lea        Molly(a5),a4
+    move.l     PlayerPtrs(a5),a4
     bsr        PlayerLogic
     ;bra        .exit
 
@@ -258,6 +258,7 @@ Sprites:
 Shadows:
     incbin     "assets/shadows.bin"
 
+    include    "uigfx.asm"
 
 
 ;----------------------------------------------
@@ -289,6 +290,9 @@ AllChip:
 
 NullSprite:    
     ds.l       0,0
+
+ButtonMaskTemp:
+    ds.b       570
 
 TileSet:
     ds.b       TILESET_SIZE

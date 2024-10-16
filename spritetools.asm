@@ -100,7 +100,7 @@ ShowSprite:
 SpriteCoord:
     PUSHM     d1/d2
 
-    add.w     #WINDOW_X_START,d1
+    add.w     #WINDOW_X_START-1,d1
     moveq     #0,d4
     ;move.b        ScreenStart(a5),d4
     move.w    #WINDOW_Y_START,d4

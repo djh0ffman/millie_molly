@@ -6,6 +6,7 @@ DrawMap:
     clr.w         LevelComplete(a5)
     bsr           LevelInit
     bsr           DrawWalls
+    bsr           DrawButtons
     bsr           DrawLadders
     bsr           DrawShadows
     ; base restore screen created
@@ -13,8 +14,39 @@ DrawMap:
     ;bsr           DrawPlayers
     bsr           DrawStaticActors
     bsr           CopyStaticToBuffers
+    bsr           PlayerSwitch
+    bsr           PlayerSwitch
+    rts
+
+
+DrawButtons:
+    move.w        #304-8,d0
+    move.w        #14,d1
+    moveq         #0,d2
+
+    lea           LevelCountRaw,a0
+    bsr           DrawLevelCounter
+    add.w         #43,d1
+
+    move.w        #304,d0
+    lea           Button0Raw,a0
+    bsr           DrawButton
+
+    lea           Button1Raw,a0
+    add.w         #43,d1
+    bsr           DrawButton
+
+    lea           Button2Raw,a0
+    add.w         #43,d1
+    bsr           DrawButton
+
+    lea           Button3Raw,a0
+    add.w         #43,d1
+    bsr           DrawButton
 
     rts
+
+
 
 CopyStaticToBuffers:
     lea           ScreenStatic,a0
@@ -45,6 +77,10 @@ LevelInit:
 
     clr.w         Millie+Player_Status(a5)
     clr.w         Molly+Player_Status(a5)
+    lea           Millie(a5),a0
+    move.l        a0,PlayerPtrs(a5)
+    lea           Molly(a5),a0
+    move.l        a0,PlayerPtrs+4(a5)
 
     bsr           SetLevelAssets
 
@@ -67,8 +103,8 @@ LevelInit:
 SetLevelAssets:
     moveq         #0,d0
     move.w        LevelId(a5),d0
-    divu          #20,d0
-    ext.l         d0
+    lea           LevelAssetSet,a0
+    move.b        (a0,d0.w),d0
     move.w        d0,AssetSet(a5)
     move.w        d0,d4
     mulu          #SCREEN_COLORS*2,d0
@@ -483,11 +519,11 @@ GenTileMask:
     rts
 
 
-SHADOW_BLT_MOD  = SCREEN_STRIDE-4
-SHADOW_BLT_SIZE = ((24)<<6)+2
+SHADOW_BLT_MOD   = SCREEN_STRIDE-4
+SHADOW_BLT_SIZE  = ((24)<<6)+2
 
-TILE_BLT_MOD    = SCREEN_WIDTH_BYTE-4
-TILE_BLT_SIZE   = ((24*SCREEN_DEPTH)<<6)+2
+TILE_BLT_MOD     = SCREEN_WIDTH_BYTE-4
+TILE_BLT_SIZE    = ((24*SCREEN_DEPTH)<<6)+2
 
 DrawWalls:
     lea           WallpaperWork(a5),a4
@@ -660,6 +696,139 @@ DrawTile:
 
     POPM          d0-d2
     rts
+
+
+
+BUTTON_BLT_MOD   = SCREEN_WIDTH_BYTE-4
+BUTTON_BLT_SIZE  = ((19*SCREEN_DEPTH)<<6)+2
+
+BUTTON2_BLT_MOD  = SCREEN_WIDTH_BYTE-6
+BUTTON2_BLT_SIZE = ((19*SCREEN_DEPTH)<<6)+3
+
+
+
+; d0 = x
+; d1 = y
+; a0 = button graphic
+DrawLevelCounter:
+    PUSHM         d0-d2
+
+    move.l        a0,a2
+    lea           ButtonMaskTemp,a3
+    move.w        #19-1,d7
+.nextline
+    move.l        (a2)+,d5
+    move.w        (a2)+,d6
+    or.l          (a2)+,d5
+    or.w          (a2)+,d6
+    or.l          (a2)+,d5
+    or.w          (a2)+,d6
+    or.l          (a2)+,d5
+    or.w          (a2)+,d6
+    or.l          (a2)+,d5
+    or.w          (a2)+,d6
+    move.l        d5,(a3)+
+    move.w        d6,(a3)+
+    move.l        d5,(a3)+
+    move.w        d6,(a3)+
+    move.l        d5,(a3)+
+    move.w        d6,(a3)+
+    move.l        d5,(a3)+
+    move.w        d6,(a3)+
+    move.l        d5,(a3)+
+    move.w        d6,(a3)+
+    dbra          d7,.nextline
+
+    lea           ButtonMaskTemp,a2
+    lea           ScreenSave,a1
+
+    lea           ButtonMaskTemp,a2
+
+    mulu          #SCREEN_STRIDE,d1
+    move.w        d0,d2
+    asr.w         #3,d2
+    add.w         d2,d1    
+    add.l         d1,a1                                ; screen position
+
+    and.w         #$f,d0                               ; shift
+    ror.w         #4,d0 
+    move.w        d0,d1
+    or.w          #$fca,d0                             ; minterm
+
+    ; test tile blit
+    WAITBLIT
+    move.w        d0,BLTCON0(a6)
+    move.w        d1,BLTCON1(a6)
+    move.l        #-1,BLTAFWM(a6)
+    move.l        a2,BLTAPT(a6)
+    move.l        a0,BLTBPT(a6)
+    move.l        a1,BLTCPT(a6)
+    move.l        a1,BLTDPT(a6)
+    move.w        #0,BLTAMOD(a6)
+    move.w        #0,BLTBMOD(a6)
+    move.w        #BUTTON2_BLT_MOD,BLTCMOD(a6)
+    move.w        #BUTTON2_BLT_MOD,BLTDMOD(a6)
+    move.w        #BUTTON2_BLT_SIZE,BLTSIZE(a6)
+
+    POPM          d0-d2
+    rts
+
+; d0 = x
+; d1 = y
+; a0 = button graphic
+DrawButton:
+    PUSHM         d0-d2
+
+    move.l        a0,a2
+    lea           ButtonMaskTemp,a3
+    move.w        #19-1,d7
+.nextline
+    move.l        (a2)+,d5
+    or.l          (a2)+,d5
+    or.l          (a2)+,d5
+    or.l          (a2)+,d5
+    or.l          (a2)+,d5
+    move.l        d5,(a3)+
+    move.l        d5,(a3)+
+    move.l        d5,(a3)+
+    move.l        d5,(a3)+
+    move.l        d5,(a3)+
+    dbra          d7,.nextline
+
+    lea           ButtonMaskTemp,a2
+    lea           ScreenSave,a1
+
+    lea           ButtonMaskTemp,a2
+
+    mulu          #SCREEN_STRIDE,d1
+    move.w        d0,d2
+    asr.w         #3,d2
+    add.w         d2,d1    
+    add.l         d1,a1                                ; screen position
+
+    and.w         #$f,d0                               ; shift
+    ror.w         #4,d0 
+    move.w        d0,d1
+    or.w          #$fca,d0                             ; minterm
+
+    ; test tile blit
+    WAITBLIT
+    move.w        d0,BLTCON0(a6)
+    move.w        d1,BLTCON1(a6)
+    move.l        #-1,BLTAFWM(a6)
+    move.l        a2,BLTAPT(a6)
+    move.l        a0,BLTBPT(a6)
+    move.l        a1,BLTCPT(a6)
+    move.l        a1,BLTDPT(a6)
+    move.w        #0,BLTAMOD(a6)
+    move.w        #0,BLTBMOD(a6)
+    move.w        #BUTTON_BLT_MOD,BLTCMOD(a6)
+    move.w        #BUTTON_BLT_MOD,BLTDMOD(a6)
+    move.w        #BUTTON_BLT_SIZE,BLTSIZE(a6)
+
+    POPM          d0-d2
+    rts
+
 
 ; d0 = x
 ; d1 = y

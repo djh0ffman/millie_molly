@@ -68,11 +68,13 @@ InitEnemyFloat:
 InitEnemyFall:
     bsr         GetActorSlot
     move.w      #TILE_ENEMYFALLA,Actor_SpriteOffset(a3)
+    move.w      #1,Actor_CanFall(a3)
     rts
 
 InitPushBlock:
     bsr         GetActorSlot
     move.w      #TILE_PUSH,Actor_SpriteOffset(a3)
+    move.w      #1,Actor_CanFall(a3)
     move.w      #1,Actor_Static(a3)
     rts
 
@@ -114,6 +116,7 @@ GetActorSlot:
     move.w      d2,Actor_Y(a3)
     move.w      d3,Actor_Type(a3)
     move.w      #1,Actor_Status(a3)
+    clr.w       Actor_CanFall(a3)
     rts
 
 
@@ -147,4 +150,89 @@ DrawStaticActors:
 .notactive
     add.w       #Actor_Sizeof,a3
     dbra        d7,.loop
+    rts
+
+ActorsSavePos:
+    move.w      ActorCount(a5),d7
+    bne         .go
+    rts
+.go
+    subq.w      #1,d7
+    lea         Actors(a5),a3
+.loop
+    move.w      Actor_X(a3),Actor_PrevX(a3)
+    move.w      Actor_Y(a3),Actor_PrevY(a3)
+    clr.w       Actor_HasMoved(a3)
+    add.w       #Actor_Sizeof,a3
+    dbra        d7,.loop
+    rts
+
+
+ClearFrozenPlayer:
+    PUSH        a4
+    move.l      PlayerPtrs+4(a5),a4
+    tst.w       Player_Fallen(a4)
+    beq         .nofall
+
+    move.w      Player_PrevX(a4),d0
+    move.w      Player_PrevY(a4),d1
+    bsr         ClearStaticBlock
+
+.nofall
+    POP         a4
+    rts
+
+ClearMovedActors:
+    move.w      ActorCount(a5),d7
+    bne         .go
+    rts
+.go
+    subq.w      #1,d7
+    lea         Actors(a5),a3
+.loop
+    tst.w       Actor_Status(a3)
+    beq         .next
+    tst.w       Actor_HasMoved(a3)
+    beq         .next
+
+    move.w      Actor_PrevX(a3),d0
+    move.w      Actor_PrevY(a3),d1
+    bsr         ClearStaticBlock
+
+.next
+    add.w       #Actor_Sizeof,a3
+    dbra        d7,.loop
+    rts
+
+DrawMovedActors:
+    move.w      ActorCount(a5),d7
+    bne         .go
+    rts
+.go
+    subq.w      #1,d7
+    lea         Actors(a5),a3
+.loop
+    tst.w       Actor_HasMoved(a3)
+    beq         .next
+
+    bsr         ActorDrawStatic
+    clr.w       Actor_HasMoved(a3)
+
+.next
+    add.w       #Actor_Sizeof,a3
+    dbra        d7,.loop
+    rts
+
+
+DrawMovedPlayer:
+    PUSH        a4
+    move.l      PlayerPtrs+4(a5),a4
+    tst.w       Player_Fallen(a4)
+    beq         .nofall
+
+    bsr         DrawPlayerFrozen
+    clr.w       Player_Fallen(a4)
+
+.nofall
+    POP         a4
     rts

@@ -82,8 +82,8 @@ PLANE_TO_COPPER    MACRO
                    swap       \1
                    ENDM
 
-BLITPRI_ENABLE  = $8400                                      ; enable blitter priority
-BLITPRI_DISABLE = $0400                                      ; disable blitter priority
+BLITPRI_ENABLE  = $8400                                           ; enable blitter priority
+BLITPRI_DISABLE = $0400                                           ; disable blitter priority
 
 WAITBLIT           MACRO
                    move.w     #BLITPRI_ENABLE,DMACON(a6)
@@ -163,3 +163,41 @@ KeyTest            MACRO
                    bset       #\2,d0
 .\@notpressed
                    ENDM
+
+** convert to decimal
+**
+** \1 = source number
+** \2 = digits
+** \3 = result
+
+TODECIMAL          MACRO
+                   moveq      #\2,d7
+                   moveq      #0,\3
+.\@loop            divu       #10,\1
+                   swap       \1
+                   or.b       \1,\3
+                   clr.w      \1
+                   swap       \1
+                   ror.w      #4,\3
+                   dbra       d7,.\@loop
+                   ENDM
+
+DECIMAL2           MACRO
+                   moveq      #0,\2
+                   divu       #10,\1
+                   swap       \1
+                   move.w     \1,\2
+                   swap       \2
+                   clr.w      \1
+                   swap       \1
+                   divu       #10,\1
+                   swap       \1
+                   move.w     \1,\2
+                   ENDM
+
+LVLFNT             macro
+                   move.b     LEVEL_COUNT_WIDTH_BYTE*\1(a0),d2
+                   and.b      d5,d2
+                   or.b       LEVEL_FONT_WIDTH_BYTE*\1(a2),d2
+                   move.b     d2,LEVEL_COUNT_WIDTH_BYTE*\1(a0)
+                   endm

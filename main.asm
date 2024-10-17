@@ -241,6 +241,9 @@ WallpaperBase:
     ENDR
     dc.b       $05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05
     
+LevelCountRaw:
+    incbin     "assets/ui_4.bin"
+LevelCountRawEnd:
 
 ;----------------------------------------------
 ;  data chip
@@ -257,6 +260,9 @@ Sprites:
     incbin     "assets/sprites.bin"
 Shadows:
     incbin     "assets/shadows.bin"
+
+LevelFont:
+    incbin     "assets/levelfont.bin"
 
     include    "uigfx.asm"
 
@@ -293,6 +299,9 @@ NullSprite:
 
 ButtonMaskTemp:
     ds.b       570
+LevelCountTemp:
+    ds.b       570
+
 
 TileSet:
     ds.b       TILESET_SIZE

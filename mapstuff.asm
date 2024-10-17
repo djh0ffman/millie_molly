@@ -20,7 +20,7 @@ DrawMap:
 
 
 DrawButtons:
-    move.w        #304-8,d0
+    move.w        #304-8-3,d0
     move.w        #14,d1
     moveq         #0,d2
 
@@ -519,11 +519,11 @@ GenTileMask:
     rts
 
 
-SHADOW_BLT_MOD   = SCREEN_STRIDE-4
-SHADOW_BLT_SIZE  = ((24)<<6)+2
+SHADOW_BLT_MOD         = SCREEN_STRIDE-4
+SHADOW_BLT_SIZE        = ((24)<<6)+2
 
-TILE_BLT_MOD     = SCREEN_WIDTH_BYTE-4
-TILE_BLT_SIZE    = ((24*SCREEN_DEPTH)<<6)+2
+TILE_BLT_MOD           = SCREEN_WIDTH_BYTE-4
+TILE_BLT_SIZE          = ((24*SCREEN_DEPTH)<<6)+2
 
 DrawWalls:
     lea           WallpaperWork(a5),a4
@@ -699,13 +699,19 @@ DrawTile:
 
 
 
-BUTTON_BLT_MOD   = SCREEN_WIDTH_BYTE-4
-BUTTON_BLT_SIZE  = ((19*SCREEN_DEPTH)<<6)+2
+BUTTON_BLT_MOD         = SCREEN_WIDTH_BYTE-4
+BUTTON_BLT_SIZE        = ((19*SCREEN_DEPTH)<<6)+2
 
-BUTTON2_BLT_MOD  = SCREEN_WIDTH_BYTE-6
-BUTTON2_BLT_SIZE = ((19*SCREEN_DEPTH)<<6)+3
+BUTTON2_BLT_MOD        = SCREEN_WIDTH_BYTE-6
+BUTTON2_BLT_SIZE       = ((19*SCREEN_DEPTH)<<6)+3
 
 
+LEVEL_COUNT_STRIDE     = LEVEL_COUNT_WIDTH_BYTE*SCREEN_DEPTH
+LEVEL_COUNT_START      = (LEVEL_COUNT_STRIDE*5)+3
+LEVEL_COUNT_WIDTH_BYTE = 6
+
+LEVEL_FONT_WIDTH_BYTE  = 10
+LEVEL_FONT_STRIDE      = 10*SCREEN_DEPTH
 
 ; d0 = x
 ; d1 = y
@@ -713,6 +719,58 @@ BUTTON2_BLT_SIZE = ((19*SCREEN_DEPTH)<<6)+3
 DrawLevelCounter:
     PUSHM         d0-d2
 
+    ; make a copy
+    lea           LevelCountRaw,a0
+    lea           LevelCountTemp,a2
+    move.w        #(570/4)-1,d7
+.copy
+    move.l        (a0)+,(a2)+
+    dbra          d7,.copy
+
+
+    move.w        LevelId(a5),d2
+    addq.w        #1,d2
+    TODECIMAL     d2,3,d3
+
+
+    lea           LevelCountTemp,a0
+    add.w         #LEVEL_COUNT_START,a0
+
+    moveq         #3-1,d6
+
+.digit
+    move.w        d3,d4
+    lsr.w         #4,d3
+    and.w         #$f,d4
+    lea           LevelFont,a2
+    add.w         d4,a2                                ; font pos    
+    
+    moveq         #8-1,d7
+    PUSH          a0
+.line   
+    move.b        (a2),d5
+    or.b          LEVEL_FONT_WIDTH_BYTE*1(a2),d5
+    or.b          LEVEL_FONT_WIDTH_BYTE*2(a2),d5
+    or.b          LEVEL_FONT_WIDTH_BYTE*3(a2),d5
+    or.b          LEVEL_FONT_WIDTH_BYTE*4(a2),d5       ; mask
+    not.b         d5
+    LVLFNT        0
+    LVLFNT        1
+    LVLFNT        2
+    LVLFNT        3
+    LVLFNT        4
+    add.w         #LEVEL_COUNT_STRIDE,a0
+    add.w         #LEVEL_FONT_STRIDE,a2
+
+    dbra          d7,.line
+
+    POP           a0
+
+    subq.l        #1,a0
+    dbra          d6,.digit
+
+    ; generate the mask
+    lea           LevelCountTemp,a0
     move.l        a0,a2
     lea           ButtonMaskTemp,a3
     move.w        #19-1,d7

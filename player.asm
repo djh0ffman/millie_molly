@@ -6,6 +6,34 @@
 ;----------------------------------------------
 
 PlayerLogic:
+    move.w      ActionStatus(a5),d0
+    JMPINDEX    d0
+
+.i
+    dc.w        ActionIdle-.i
+    dc.w        ActionMove-.i
+
+ActionMove:
+    move.w      Player_XDec(a4),d0
+    add.w       Player_DirectionX(a4),d0
+    move.w      d0,Player_XDec(a4)
+    bsr         PlayerShowWalkAnim
+
+    subq.w      #1,Player_ActionCount(a4)
+    bne         .exit
+
+    clr.w       ActionStatus(a5)
+    bsr         PlayerMoveLogic
+    bsr         PlayerFallLogic
+    clr.w       Player_XDec(a4)
+    
+    ;move.w      Player_DirectionX(a4),d0
+    ;add.w       d0,Player_X(a4)
+.exit
+    rts
+
+
+ActionIdle:
     btst        #CONTROLB_FIRE,ControlsTrigger(a5)
     bne         PlayerSwitch
 
@@ -13,6 +41,8 @@ PlayerLogic:
     bsr         ActorsSavePos
 
     bsr         PlayerCheckControls
+    tst.w       ActionStatus(a5)
+    bne         .exit
 
     bsr         PlayerMoveLogic
     bsr         PlayerFallLogic
@@ -56,16 +86,25 @@ DrawPlayerFrozen:
     move.w      Player_Y(a4),d1
     mulu        #24,d0
     mulu        #24,d1
+
     moveq       #0,d2
+    move.w      Player_LadderFreezeId(a4),d2
+    tst.w       Player_OnLadder(a4)
+    bne         .isright
+
     move.w      Player_SpriteOffset(a4),d2
     add.w       #46,d2
+    tst.w       Player_Facing(a4)
+    bpl         .isright
+    addq.w      #1,d2
+.isright
     bsr         DrawSprite
     rts
 
 CheckLevelDone:
     lea         GameMap(a5),a0
     moveq       #WALL_PAPER_SIZE-1,d7
-    moveq       #0,d3                                 ; enemy count
+    moveq       #0,d3                                      ; enemy count
 .loop
     move.b      (a0)+,d0
     cmp.b       #BLOCK_ENEMYFALL,d0
@@ -95,10 +134,10 @@ PlayerMoveLogic:
     mulu        #WALL_PAPER_WIDTH,d1
     add.w       Player_NextX(a4),d1
 
-    move.b      (a0,d0.w),d2                          ; current
-    move.b      (a0,d1.w),d3                          ; next
+    move.b      (a0,d0.w),d2                               ; current
+    move.b      (a0,d1.w),d3                               ; next
 
-    move.b      Player_BlockId(a4),d4                 ; next block??
+    move.b      Player_BlockId(a4),d4                      ; next block??
     cmp.b       #BLOCK_LADDER,d3 
     bne         .notladdernext
     move.b      Player_LadderId(a4),d4
@@ -140,7 +179,7 @@ PlayerFallLogicFrozen:
     cmp.b       (a0,d1.w),d2
     beq         .exit
 
-    moveq       #0,d3                                 ; fall count
+    moveq       #0,d3                                      ; fall count
 
 .findfloor
     tst.b       WALL_PAPER_WIDTH(a0,d1.w)
@@ -176,7 +215,7 @@ PlayerFallLogic:
     cmp.b       (a0,d1.w),d2
     beq         .exit
 
-    moveq       #0,d3                                 ; fall count
+    moveq       #0,d3                                      ; fall count
 
 .findfloor
     tst.b       WALL_PAPER_WIDTH(a0,d1.w)
@@ -248,6 +287,7 @@ PlayerIdle:
     rts
 
 .move
+    move.w      Player_DirectionX(a4),Player_Facing(a4)
     bsr         PlayerTryMove
 
 .exit
@@ -262,10 +302,62 @@ PlayerShowIdleAnim:
     beq         .anim
     rts
 .anim
+    move.w      Player_Y(a4),d1
+    mulu        #WALL_PAPER_WIDTH,d1
+    add.w       Player_X(a4),d1
+
+    moveq       #0,d2
+    lea         GameMap(a5),a0
+    move.b      (a0,d1.w),d1
+    cmp.b       Player_LadderId(a4),d1
+    bne         .noladder1
+    moveq       #1,d2
+.noladder1
+    move.w      d2,Player_OnLadder(a4)
+
     move.w      Player_AnimFrame(a4),d0
     addq.w      #1,d0
     and.w       #3,d0
     move.w      d0,Player_AnimFrame(a4)
+
+    tst.w       Player_OnLadder(a4)
+    beq         .noladder
+    add.w       #PLAYER_SPRITE_LADDER_OFFSET,d0
+    bra         .isright
+
+.noladder
+    tst.w       Player_Facing(a4)
+    bpl         .isright
+    add.w       #PLAYER_SPRITE_LEFT_OFFSET,d0
+
+.isright
+    bsr         ShowSprite
+    rts
+
+
+
+
+
+PlayerShowWalkAnim:
+    move.w      TickCounter(a5),d0
+    divu        #5,d0
+    swap        d0
+    tst.w       d0
+    beq         .anim
+    rts
+.anim
+    move.w      Player_AnimFrame(a4),d0
+    addq.w      #1,d0
+    and.w       #7,d0
+    move.w      d0,Player_AnimFrame(a4)
+
+    addq.w      #PLAYER_SPRITE_WALK_OFFSET,d0
+
+    tst.w       Player_Facing(a4)
+    bpl         .isright
+    add.w       #PLAYER_SPRITE_LEFT_OFFSET,d0
+
+.isright
     bsr         ShowSprite
     rts
 
@@ -284,17 +376,17 @@ PlayerTryMove:
 
     JMPINDEX    d2
 .i
-    dc.w        PlayerDoMove-.i                       ;BLOCK_EMPTY       = 0
-    dc.w        PlayerDoMove-.i                       ;BLOCK_LADDER      = 1
-    dc.w        PlayerKillEnemy-.i                    ;BLOCK_ENEMYFALL   = 2
-    dc.w        PlayerPushBlock-.i                    ;BLOCK_PUSH        = 3
-    dc.w        PlayerKillDirt-.i                     ;BLOCK_DIRT        = 4
-    dc.w        PlayerNotMove-.i                      ;BLOCK_SOLID       = 5
-    dc.w        PlayerKillEnemy-.i                    ;BLOCK_ENEMYFLOAT  = 6
-    dc.w        PlayerNotMove-.i                      ;BLOCK_MILLIESTART = 7
-    dc.w        PlayerNotMove-.i                      ;BLOCK_MOLLYSTART  = 8
-    dc.w        PlayerMoveLadder-.i                   ;BLOCK_LADDERSTART = 7
-    dc.w        PlayerMoveLadder-.i                   ;BLOCK_MOLLYSTART  = 8
+    dc.w        PlayerDoMove-.i                            ;BLOCK_EMPTY       = 0
+    dc.w        PlayerDoMove-.i                            ;BLOCK_LADDER      = 1
+    dc.w        PlayerKillEnemy-.i                         ;BLOCK_ENEMYFALL   = 2
+    dc.w        PlayerPushBlock-.i                         ;BLOCK_PUSH        = 3
+    dc.w        PlayerKillDirt-.i                          ;BLOCK_DIRT        = 4
+    dc.w        PlayerNotMove-.i                           ;BLOCK_SOLID       = 5
+    dc.w        PlayerKillEnemy-.i                         ;BLOCK_ENEMYFLOAT  = 6
+    dc.w        PlayerNotMove-.i                           ;BLOCK_MILLIESTART = 7
+    dc.w        PlayerNotMove-.i                           ;BLOCK_MOLLYSTART  = 8
+    dc.w        PlayerMoveLadder-.i                        ;BLOCK_LADDERSTART = 7
+    dc.w        PlayerMoveLadder-.i                        ;BLOCK_MOLLYSTART  = 8
     rts
 
 PlayerPushBlock:
@@ -338,6 +430,12 @@ PlayerDoMove:
     move.w      d0,Player_NextX(a4)
     move.w      d1,Player_NextY(a4)
 
+
+    move.w      #ACTION_MOVE,ActionStatus(a5)
+    move.w      #24,Player_ActionCount(a4)
+
+    clr.w       Player_XDec(a4)
+    clr.w       Player_YDec(a4)
     rts
 
 
@@ -365,6 +463,7 @@ PlayerMoveActor:
     move.w      Player_DirectionX(a4),d2
     add.w       d2,Actor_X(a3)
 
+
     mulu        #WALL_PAPER_WIDTH,d1
     add.w       d1,d0
     add.w       d0,d2
@@ -375,7 +474,7 @@ PlayerMoveActor:
     move.w      #1,Actor_HasMoved(a3)
     ;bsr         ActorFall
     ;bsr         ActorDrawStatic
-    bra         .exit                                 ; killed something we are done
+    bra         .exit                                      ; killed something we are done
 
 .next
     add.w       #Actor_Sizeof,a3
@@ -384,7 +483,7 @@ PlayerMoveActor:
     rts 
 
 ActorFallAll:
-    moveq       #0,d5                                 ; fall count
+    moveq       #0,d5                                      ; fall count
     move.w      ActorCount(a5),d7
     bne         .go
     rts
@@ -430,7 +529,7 @@ ActorFall:
     add.w       Actor_X(a3),d0
     move.w      d0,d1
 
-    moveq       #0,d3                                 ; fall count
+    moveq       #0,d3                                      ; fall count
 
 .findfloor
     tst.b       WALL_PAPER_WIDTH(a0,d1.w)
@@ -475,7 +574,7 @@ PlayerKillActor:
     move.w      Actor_X(a3),d0
     move.w      Actor_Y(a3),d1
     bra         ClearStaticBlock
-    bra         .exit                                 ; killed something we are done
+    bra         .exit                                      ; killed something we are done
 
 .next
     add.w       #Actor_Sizeof,a3
@@ -497,8 +596,8 @@ ClearPlayer:
     move.w      d0,d2
     asr.w       #3,d2
     add.w       d2,d1    
-    add.l       d1,a0                                 ; screen position
-    add.l       d1,a1                                 ; screen position
+    add.l       d1,a0                                      ; screen position
+    add.l       d1,a1                                      ; screen position
 
     move.l      #$ffffff00,d1
     and.w       #$f,d0
@@ -536,8 +635,8 @@ ClearStaticBlock:
     move.w      d0,d2
     asr.w       #3,d2
     add.w       d2,d1    
-    add.l       d1,a0                                 ; screen position
-    add.l       d1,a1                                 ; screen position
+    add.l       d1,a0                                      ; screen position
+    add.l       d1,a1                                      ; screen position
 
     move.l      #$ffffff00,d1
     and.w       #$f,d0
@@ -571,7 +670,7 @@ PlayerGetNextBlock:
     move.w      Player_Y(a4),d0
     add.w       Player_DirectionY(a4),d0
     mulu        #WALL_PAPER_WIDTH,d0
-    add.w       Player_X(a4),d0                       ; offset in map
+    add.w       Player_X(a4),d0                            ; offset in map
     add.w       Player_DirectionX(a4),d0
 
     lea         GameMap(a5),a0

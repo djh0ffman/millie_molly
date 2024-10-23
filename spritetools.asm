@@ -18,8 +18,10 @@ ShowSprite:
     mulu      #24,d1
     mulu      #24,d2
 
-    move.w    Player_SpriteOffset(a4),d0
-    add.w     Player_AnimFrame(a4),d0
+    add.w     Player_XDec(a4),d1
+
+    add.w     Player_SpriteOffset(a4),d0
+    ;add.w     Player_AnimFrame(a4),d0
 
     mulu      #SPRITE_SIZE*4,d0
     lea       RealSprites,a0

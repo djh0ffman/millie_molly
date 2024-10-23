@@ -24,6 +24,7 @@ TickCounter:         rs.w       1
 ControlsTrigger:     rs.b       1 
 ControlsHold:        rs.b       1 
 PlayerMoved:         rs.w       1
+PlayerCount:         rs.w       1
 LevelComplete:       rs.w       1
-
+ActionStatus:        rs.w       1
 Variables_sizeof:    rs.w       0

@@ -3,7 +3,10 @@
 ;-----------------------------------------------
 
 DrawMap:
+    clr.w         PlayerCount(a5)
     clr.w         LevelComplete(a5)
+    clr.w         ActionStatus(a5)
+    
     bsr           LevelInit
     bsr           DrawWalls
     bsr           DrawButtons
@@ -14,8 +17,15 @@ DrawMap:
     ;bsr           DrawPlayers
     bsr           DrawStaticActors
     bsr           CopyStaticToBuffers
-    bsr           PlayerSwitch
-    bsr           PlayerSwitch
+
+    ;cmp.w         #2,PlayerCount(a5)
+    ;bne           .notboth
+
+    ;move.l        PlayerPtrs+4(a5),a4
+    ;bsr           DrawPlayerFrozen
+    ;bsr           PlayerSwitch
+    ;bsr           PlayerSwitch
+.notboth
     rts
 
 
@@ -75,11 +85,12 @@ LevelInit:
     move.l        #SCREEN_SIZE,d7
     bsr           TurboClear
 
-    clr.w         Millie+Player_Status(a5)
-    clr.w         Molly+Player_Status(a5)
     lea           Millie(a5),a0
+    clr.w         Player_Status(a0)
     move.l        a0,PlayerPtrs(a5)
+
     lea           Molly(a5),a0
+    clr.w         Player_Status(a0)
     move.l        a0,PlayerPtrs+4(a5)
 
     bsr           SetLevelAssets

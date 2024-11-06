@@ -18,6 +18,7 @@ Player_LadderFreezeId:    rs.w       1
 Player_DirectionX:        rs.w       1
 Player_DirectionY:        rs.w       1
 Player_Fallen:            rs.w       1
+Player_ActionFrame:       rs.w       1
 Player_BlockId:           rs.b       1
 Player_LadderId:          rs.b       1
 Player_Sizeof:            rs.w       0

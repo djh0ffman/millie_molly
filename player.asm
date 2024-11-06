@@ -12,20 +12,84 @@ PlayerLogic:
 .i
     dc.w        ActionIdle-.i
     dc.w        ActionMove-.i
+    dc.w        ActionPlayerFall-.i
+
+
+;----------------------------------------------
+;  action fall
+;----------------------------------------------
+
+
+ActionPlayerFall:
+    move.w      Player_Y(a4),d0
+    move.w      Player_NextY(a4),d1
+    mulu        #24,d0
+    mulu        #24,d1
+    sub.w       d0,d1                                      ; total pixels
+
+    move.w      Player_ActionFrame(a4),d2
+    lea         Quadratic,a0
+    add.w       d2,d2
+    move.w      (a0,d2.w),d2
+    divu        d1,d2
+    
+    cmp.w       d1,d2
+    bcs         .inrange
+    move.w      d1,d2
+.inrange    
+    move.w      d2,Player_YDec(a4) 
+
+    addq.w      #1,Player_ActionFrame(a4)
+
+    cmp.w       d1,d2
+    bne         .show
+
+
+;    addq.w      #1,Player_YDec(a4)                         ; 24
+;    cmp.w       #24,Player_YDec(a4)
+;    bne         .show
+;    clr         Player_YDec(a4)
+;    move.w      Player_Y(a4),d0
+;    addq.w      #1,d0
+;    move.w      d0,Player_Y(a4)
+;    cmp.w       Player_NextY(a4),d0
+;    bne         .show
+
+    ; exit the fall
+    clr.w       ActionStatus(a5)
+    clr.w       Player_YDec(a4)
+    move.w      Player_NextY(a4),Player_Y(a4)
+
+.show
+    move.w      Player_AnimFrame(a4),d0
+    add.w       #PLAYER_SPRITE_FALL_OFFSET,d0
+    bsr         ShowSprite
+    rts
+
+;----------------------------------------------
+;  action move
+;----------------------------------------------
 
 ActionMove:
     move.w      Player_XDec(a4),d0
     add.w       Player_DirectionX(a4),d0
     move.w      d0,Player_XDec(a4)
+
+    move.w      Player_YDec(a4),d0
+    add.w       Player_DirectionY(a4),d0
+    move.w      d0,Player_YDec(a4)
+
     bsr         PlayerShowWalkAnim
 
     subq.w      #1,Player_ActionCount(a4)
     bne         .exit
 
     clr.w       ActionStatus(a5)
+    clr.w       Player_XDec(a4)
+    clr.w       Player_YDec(a4)
+
     bsr         PlayerMoveLogic
     bsr         PlayerFallLogic
-    clr.w       Player_XDec(a4)
     
     ;move.w      Player_DirectionX(a4),d0
     ;add.w       d0,Player_X(a4)
@@ -227,9 +291,19 @@ PlayerFallLogic:
 .found
     tst.w       d3
     beq         .exit
-    add.w       d3,Player_Y(a4)
+
+    ; setup fall
+    ; set player next position
+    add.w       Player_Y(a4),d3
+    move.w      d3,Player_NextY(a4)
+    move.w      Player_X(a4),Player_NextX(a4)
+
     clr.b       (a0,d0.w)
     move.b      Player_BlockId(a4),(a0,d1.w)
+    move.w      #ACTION_PLAYERFALL,ActionStatus(a5)
+    clr.w       Player_AnimFrame(a4)
+
+    clr.w       Player_ActionFrame(a4)
 
 .exit
     rts
@@ -306,6 +380,8 @@ PlayerShowIdleAnim:
     mulu        #WALL_PAPER_WIDTH,d1
     add.w       Player_X(a4),d1
 
+    moveq       #PLAYER_SPRITE_LADDER_IDLE,d0             
+
     moveq       #0,d2
     lea         GameMap(a5),a0
     move.b      (a0,d1.w),d1
@@ -314,6 +390,7 @@ PlayerShowIdleAnim:
     moveq       #1,d2
 .noladder1
     move.w      d2,Player_OnLadder(a4)
+    bne         .isright
 
     move.w      Player_AnimFrame(a4),d0
     addq.w      #1,d0
@@ -340,24 +417,28 @@ PlayerShowIdleAnim:
 
 PlayerShowWalkAnim:
     move.w      TickCounter(a5),d0
-    divu        #5,d0
-    swap        d0
-    tst.w       d0
-    beq         .anim
-    rts
-.anim
+    and.w       #1,d0
+    bne         .show
+;    rts
+;.anim
     move.w      Player_AnimFrame(a4),d0
     addq.w      #1,d0
     and.w       #7,d0
     move.w      d0,Player_AnimFrame(a4)
+.show
+    move.w      Player_AnimFrame(a4),d0
+    move.w      #PLAYER_SPRITE_LADDER_OFFSET,d1
+    tst.w       Player_OnLadder(a4)
+    bne         .isright
 
-    addq.w      #PLAYER_SPRITE_WALK_OFFSET,d0
+    move.w      #PLAYER_SPRITE_WALK_OFFSET,d1
 
     tst.w       Player_Facing(a4)
     bpl         .isright
     add.w       #PLAYER_SPRITE_LEFT_OFFSET,d0
 
 .isright
+    add.w       d1,d0
     bsr         ShowSprite
     rts
 

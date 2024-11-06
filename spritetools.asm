@@ -3,6 +3,7 @@
 ; Sprite
 ;-----------------------------------------------
 
+;d0 = sprite id
 ;a4 = player structure
 
 ShowSprite:
@@ -19,6 +20,7 @@ ShowSprite:
     mulu      #24,d2
 
     add.w     Player_XDec(a4),d1
+    add.w     Player_YDec(a4),d2
 
     add.w     Player_SpriteOffset(a4),d0
     ;add.w     Player_AnimFrame(a4),d0

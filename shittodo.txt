@@ -1,0 +1,10 @@
+SHIT TO DO
+
+. ladder idle, not animated (check original)
+. fall animation ( straight in to fall! )
+. transition in / out ladder
+. better on ladder detection
+
+SHIT THAT GOT DONE
+
+. walk anim faster!

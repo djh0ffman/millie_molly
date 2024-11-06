@@ -10,7 +10,21 @@ WINDOW_Y_STOP               = $2c-40
 
 PLAYER_SPRITE_LEFT_OFFSET   = 32
 PLAYER_SPRITE_LADDER_OFFSET = 16
+PLAYER_SPRITE_LADDER_IDLE   = 19
+PLAYER_SPRITE_FALL_OFFSET   = 28
 PLAYER_SPRITE_WALK_OFFSET   = 4
+
+
+SINE_ANGLES              = (SinusEnd-Sinus)/2
+SINE_RANGE               = $7fff
+SINE_0                   = 0
+SINE_1                   = SINE_ANGLES/360
+SINE_45                  = SINE_ANGLES/8
+SINE_90                  = SINE_ANGLES/4
+SINE_180                 = SINE_90*2
+SINE_270                 = SINE_90*3
+
+
 
 WINDOW_START                = (WINDOW_Y_START<<8)|WINDOW_X_START
 WINDOW_STOP                 = (WINDOW_Y_STOP<<8)|WINDOW_X_STOP
@@ -128,3 +142,4 @@ CONTROLF_FIRE               = 1<<4
 
 ACTION_IDLE                 = 0
 ACTION_MOVE                 = 1
+ACTION_PLAYERFALL           = 2

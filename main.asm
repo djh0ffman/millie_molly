@@ -215,6 +215,16 @@ ClearSprites:
 
     section    data_fast,data
 
+
+Quartic:    
+    incbin     "assets/quartic.bin"
+Quadratic:    
+    incbin     "assets/quadratic.bin"
+Sinus:    
+    incbin     "assets/sin.bin"
+SinusEnd:
+
+
     include    "assets.asm"
 
 SpritePal:

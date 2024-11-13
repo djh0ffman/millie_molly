@@ -15,14 +15,14 @@ PLAYER_SPRITE_FALL_OFFSET   = 28
 PLAYER_SPRITE_WALK_OFFSET   = 4
 
 
-SINE_ANGLES              = (SinusEnd-Sinus)/2
-SINE_RANGE               = $7fff
-SINE_0                   = 0
-SINE_1                   = SINE_ANGLES/360
-SINE_45                  = SINE_ANGLES/8
-SINE_90                  = SINE_ANGLES/4
-SINE_180                 = SINE_90*2
-SINE_270                 = SINE_90*3
+SINE_ANGLES                 = (SinusEnd-Sinus)/2
+SINE_RANGE                  = $7fff
+SINE_0                      = 0
+SINE_1                      = SINE_ANGLES/360
+SINE_45                     = SINE_ANGLES/8
+SINE_90                     = SINE_ANGLES/4
+SINE_180                    = SINE_90*2
+SINE_270                    = SINE_90*3
 
 
 
@@ -73,7 +73,7 @@ TILE_SCREEN_HEIGHT          = SCREEN_HEIGHT/TILE_HEIGHT
 
 SPRITE_SIZE                 = 4+(TILE_HEIGHT*4)+4
 
-START_LEVEL                 = 0
+START_LEVEL                 = 5
 
 TILE_WALLSINGLE             = 0
 TILE_WALLLEFT               = 1
@@ -143,3 +143,4 @@ CONTROLF_FIRE               = 1<<4
 ACTION_IDLE                 = 0
 ACTION_MOVE                 = 1
 ACTION_PLAYERFALL           = 2
+ACTION_PLAYERPUSH           = 3

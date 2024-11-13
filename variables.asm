@@ -27,4 +27,6 @@ PlayerMoved:         rs.w       1
 PlayerCount:         rs.w       1
 LevelComplete:       rs.w       1
 ActionStatus:        rs.w       1
+PushedActor:         rs.l       1
+ActionCounter:       rs.w       1
 Variables_sizeof:    rs.w       0

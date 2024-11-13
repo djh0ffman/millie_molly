@@ -899,13 +899,64 @@ DrawButton:
     rts
 
 
+
+; d0 = x
+; d1 = y
+; d2 = tile id
+; a1 screen buffer!
+
+; a3 = actors pointer
+DrawActor:
+    PUSHM         d0-d2
+
+    lea           ScreenSave,a1
+    move.w        Actor_SpriteOffset(a3),d2
+    
+    move.l        TilesetPtr(a5),a0
+    lea           TileMask,a2
+
+
+    mulu          #TILE_SIZE,d2
+    add.w         d2,a0                                ; tile graphic
+    add.w         d2,a2                                ; tile graphic
+
+    mulu          #SCREEN_STRIDE,d1
+    move.w        d0,d2
+    asr.w         #3,d2
+    add.w         d2,d1    
+    add.l         d1,a1                                ; screen position
+
+    and.w         #$f,d0                               ; shift
+    ror.w         #4,d0 
+    move.w        d0,d1
+    or.w          #$fca,d0                             ; minterm
+
+    ; test tile blit
+    WAITBLIT
+    move.w        d0,BLTCON0(a6)
+    move.w        d1,BLTCON1(a6)
+    move.l        #-1,BLTAFWM(a6)
+    move.l        a2,BLTAPT(a6)
+    move.l        a0,BLTBPT(a6)
+    move.l        a1,BLTCPT(a6)
+    move.l        a1,BLTDPT(a6)
+    move.w        #0,BLTAMOD(a6)
+    move.w        #0,BLTBMOD(a6)
+    move.w        #TILE_BLT_MOD,BLTCMOD(a6)
+    move.w        #TILE_BLT_MOD,BLTDMOD(a6)
+    move.w        #TILE_BLT_SIZE,BLTSIZE(a6)
+
+    POPM          d0-d2
+    rts
+
+
+
 ; d0 = x
 ; d1 = y
 ; d2 = tile id
 ; a1 screen buffer!
 PasteTile:
     PUSHM         d0-d2
-
     move.l        TilesetPtr(a5),a0
     lea           TileMask,a2
 

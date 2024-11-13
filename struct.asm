@@ -29,6 +29,10 @@ Actor_X:                  rs.w       1
 Actor_Y:                  rs.w       1
 Actor_PrevX:              rs.w       1
 Actor_PrevY:              rs.w       1
+Actor_XDec:               rs.w       1
+Actor_YDec:               rs.w       1
+Actor_DirectionX:         rs.w       1
+Actor_DirectionY:         rs.w       1
 Actor_HasMoved:           rs.w       1
 Actor_Type:               rs.w       1
 Actor_SpriteOffset:       rs.w       1

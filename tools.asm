@@ -1,7 +1,7 @@
 
 ; a0 = location
 ; d7 byte count
-TurboClear
+TurboClear:
     PUSHALL
     add.l      d7,a0
 

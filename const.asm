@@ -73,7 +73,7 @@ TILE_SCREEN_HEIGHT          = SCREEN_HEIGHT/TILE_HEIGHT
 
 SPRITE_SIZE                 = 4+(TILE_HEIGHT*4)+4
 
-START_LEVEL                 = 5
+START_LEVEL                 = 17
 
 TILE_WALLSINGLE             = 0
 TILE_WALLLEFT               = 1
@@ -142,5 +142,6 @@ CONTROLF_FIRE               = 1<<4
 
 ACTION_IDLE                 = 0
 ACTION_MOVE                 = 1
-ACTION_PLAYERFALL           = 2
+ACTION_FALL                 = 2
 ACTION_PLAYERPUSH           = 3
+

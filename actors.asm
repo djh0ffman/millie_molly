@@ -2,7 +2,11 @@
 InitGameObjects:
     clr.w       ActorCount(a5)
 
-
+    lea         ActorList(a5),a0
+    move.l      a0,ActorSlotPtr(a5)
+    move.l      #Actor_Sizeof*MAX_ACTORS,d7
+    bsr         TurboClear
+    
     lea         GameMap(a5),a0
     moveq       #0,d1                                       ; x
     moveq       #0,d2                                       ; y
@@ -18,6 +22,8 @@ InitGameObjects:
     addq.w      #1,d2                                       ; next y
     cmp.w       #WALL_PAPER_HEIGHT,d2
     bne         .nextcell
+
+    bsr         SortActors
     rts
 
 ; d0 - type
@@ -104,7 +110,11 @@ InitPlayer:
     move.w      d2,Player_Y(a4)
     move.w      #1,Player_Status(a4)
     move.w      #1,Player_DirectionX(a4)
-    
+    clr.w       Player_XDec(a4)
+    clr.w       Player_YDec(a4)
+
+
+
     ;cmp.w       #2,PlayerCount(a5)
     ;bne         .noother
     ;PUSHMOST
@@ -129,6 +139,12 @@ GetActorSlot:
     move.w      d3,Actor_Type(a3)
     move.w      #1,Actor_Status(a3)
     clr.w       Actor_CanFall(a3)
+
+    PUSH        a0
+    move.l      ActorSlotPtr(a5),a0
+    move.l      a3,(a0)+
+    move.l      a0,ActorSlotPtr(a5)
+    POP         a0
     rts
 
 
@@ -170,12 +186,12 @@ ActorsSavePos:
     rts
 .go
     subq.w      #1,d7
-    lea         Actors(a5),a3
+    lea         ActorList(a5),a2
 .loop
+    move.l      (a2)+,a3
     move.w      Actor_X(a3),Actor_PrevX(a3)
     move.w      Actor_Y(a3),Actor_PrevY(a3)
     clr.w       Actor_HasMoved(a3)
-    add.w       #Actor_Sizeof,a3
     dbra        d7,.loop
     rts
 
@@ -216,35 +232,91 @@ ClearMovedActors:
     dbra        d7,.loop
     rts
 
-DrawMovedActors:
+;DrawMovedActors:
+;    move.w      ActorCount(a5),d7
+;    bne         .go
+;    rts
+;.go
+;    subq.w      #1,d7
+;    lea         Actors(a5),a3
+;.loop
+;    tst.w       Actor_HasMoved(a3)
+;    beq         .next
+;
+;    bsr         ActorDrawStatic
+;    clr.w       Actor_HasMoved(a3)
+;
+;.next
+;    add.w       #Actor_Sizeof,a3
+;    dbra        d7,.loop
+;    rts
+
+
+;DrawMovedPlayer:
+;    PUSH        a4
+;    move.l      PlayerPtrs+4(a5),a4
+;    tst.w       Player_Fallen(a4)
+;    beq         .nofall
+;
+;    bsr         DrawPlayerFrozen
+;    clr.w       Player_Fallen(a4)
+;
+;.nofall
+;    POP         a4
+;    rts
+
+
+
+
+CleanActors:
     move.w      ActorCount(a5),d7
-    bne         .go
-    rts
-.go
     subq.w      #1,d7
-    lea         Actors(a5),a3
+    bmi         .exit
+    moveq       #0,d6                                       ; actor count
+    lea         ActorList(a5),a0
+    move.l      a0,a1
 .loop
-    tst.w       Actor_HasMoved(a3)
+    move.l      (a0)+,a3
+    tst.w       Actor_Status(a3)
     beq         .next
 
-    bsr         ActorDrawStatic
-    clr.w       Actor_HasMoved(a3)
-
+    move.l      a3,(a1)+
+    addq.w      #1,d6
 .next
-    add.w       #Actor_Sizeof,a3
     dbra        d7,.loop
+
+    move.w      d6,ActorCount(a5)
+.exit
     rts
 
+SortActors:
+    moveq       #0,d6                                       ; sort happend
 
-DrawMovedPlayer:
-    PUSH        a4
-    move.l      PlayerPtrs+4(a5),a4
-    tst.w       Player_Fallen(a4)
-    beq         .nofall
+    move.w      ActorCount(a5),d7
+    subq.w      #2,d7
+    bmi         .exit
 
-    bsr         DrawPlayerFrozen
-    clr.w       Player_Fallen(a4)
+    lea         ActorList(a5),a0
+.next
+    move.l      (a0),a1
+    move.l      4(a0),a2
 
-.nofall
-    POP         a4
+    move.w      Actor_Y(a1),d0
+    move.w      Actor_Y(a2),d1
+    cmp.w       d1,d0
+    bcc         .skip
+
+    ; flip
+    move.l      a2,(a0)
+    move.l      a1,4(a0)
+    moveq       #1,d6
+
+.skip
+    addq.w      #4,a0
+    dbra        d7,.next
+    
+    tst.w       d6
+    bne         SortActors
+
+.exit
     rts

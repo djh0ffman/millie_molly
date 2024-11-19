@@ -12,61 +12,140 @@ PlayerLogic:
 .i
     dc.w        ActionIdle-.i
     dc.w        ActionMove-.i
-    dc.w        ActionPlayerFall-.i
+    dc.w        ActionFall-.i
     dc.w        ActionPlayerPush-.i
+
+
+
+
+ActionFall:
+    bsr         ActionPlayerFall
+    bsr         ActionFallActors
+    add.w       Player_Fallen(a4),d6
+    bne         .notyet
+    move.w      #ACTION_IDLE,ActionStatus(a5)
+.notyet
+    rts
+
+;----------------------------------------------
+;  action push
+;
+; tst d6 on exit / bne not complete
+;----------------------------------------------
+
+ActionFallActors:
+    moveq       #0,d6                                         ; fall count
+    move.w      FallenActorsCount(a5),d7
+    subq.w      #1,d7
+    bmi         .exit
+
+    lea         FallenActors(a5),a2
+.loop
+    move.l      (a2)+,a3
+
+    tst.w       Actor_HasFalled(a3)
+    beq         .next
+
+    addq.w      #1,d6                                         ; fall count
+    bsr         ClearActor
+    addq.w      #1,Actor_YDec(a3)
+    bsr         DrawActor
+
+    move.w      Actor_YDec(a3),d0
+    cmp.w       Actor_FallY(a3),d0
+    bne         .next
+
+    clr.w       Actor_YDec(a3)
+    clr.w       Actor_HasFalled(a3)
+.next
+    dbra        d7,.loop
+.exit
+    tst.w       d6
+;    bne         .exit
+;.done
+;    move.w      #ACTION_IDLE,ActionStatus(a5)
+;.exit
+    rts
+
 
 ;----------------------------------------------
 ;  action push
 ;----------------------------------------------
 
+PUSH_STEPS = 12
+PUSH_DELTA = (SINE_ANGLES<<16)/2/PUSH_STEPS
+
 ActionPlayerPush:
     ; clear the actor
     move.l      PushedActor(a5),a3
-    move.w      Actor_PrevX(a3),d0
-    mulu        #24,d0
-    add.w       Actor_XDec(a3),d0
-    move.w      Actor_PrevY(a3),d1
-    mulu        #24,d1
-    add.w       Actor_YDec(a3),d1
+
     bsr         ClearActor
 
     ; move / set position
-    move.w      Actor_XDec(a3),d2
-    add.w       Actor_DirectionX(a3),d2
-    move.w      d2,Actor_XDec(a3)
+    ;move.w      Actor_XDec(a3),d2
+    ;moveq       #1,d2
+    ;add.w       Actor_DirectionX(a3),d2
+    ;move.w      d2,Actor_XDec(a3)
 
-    move.w      Actor_YDec(a3),d3
-    add.w       Actor_DirectionY(a3),d3
-    move.w      d3,Actor_YDec(a3)
+    ;move.w      Actor_YDec(a3),d3
+    ;add.w       Actor_DirectionY(a3),d3
+    ;move.w      d3,Actor_YDec(a3)
+
+    lea         Quadratic,a0
+    sub.l       #PUSH_DELTA,Actor_Delta(a3)
+    moveq       #0,d0
+    move.w      Actor_Delta(a3),d0
+    add.w       #SINE_270,d0
+    and.w       #SINE_RANGE-1,d0
+    add.w       d0,d0
+    move.w      (a0,d0.w),d0                                  ; quad
+    muls        #12,d0
+    divs        #SINE_RANGE,d0
+    add.w       #12,d0
+    move.w      Actor_DirectionX(a3),d4
+    tst.w       Actor_DirectionX(a3)
+    bpl         .positive
+    neg.w       d0
+.positive
+    move.w      d0,Actor_XDec(a3) 
+    
+    ;
+    ;move.w      ActionCounter(a3),Actor_XDec(a3)
 
 ;    add.w       d2,d0                                         ; next pixel x
 ;    add.w       d3,d1                                         ; next pixel y
 
-    move.w      Actor_PrevX(a3),d0
-    mulu        #24,d0
-    add.w       Actor_XDec(a3),d0
-
-    move.w      Actor_PrevY(a3),d1
-    mulu        #24,d1
-    add.w       Actor_YDec(a3),d1
 
     ; draw it again
     bsr         DrawActor
 
     addq.w      #1,ActionCounter(a3)
-    cmp.w       #24,ActionCounter(a3)
+    cmp.w       #PUSH_STEPS,ActionCounter(a3)
     bne         .exit
 
-    move.w      #ACTION_IDLE,ActionStatus(a5)
+    clr.w       Actor_XDec(a3)
+    move.w      Actor_X(a3),Actor_PrevX(a3)
+
+    bsr         ActorFallAll
+    move.w      #ACTION_IDLE,d0
+    tst.w       d5
+    beq         .nofall
+    move.w      #ACTION_FALL,d0
+.nofall
+    move.w      d0,ActionStatus(a5)
 .exit
     rts
 
 ;----------------------------------------------
 ;  action fall
+;
+; Player_Fallen(a4) clear when complete
 ;----------------------------------------------
 
 
 ActionPlayerFall:
+    tst.w       Player_Fallen(a4)
+    beq         .exit
     move.w      Player_Y(a4),d0
     move.w      Player_NextY(a4),d1
     mulu        #24,d0
@@ -90,19 +169,9 @@ ActionPlayerFall:
     cmp.w       d1,d2
     bne         .show
 
-
-;    addq.w      #1,Player_YDec(a4)                         ; 24
-;    cmp.w       #24,Player_YDec(a4)
-;    bne         .show
-;    clr         Player_YDec(a4)
-;    move.w      Player_Y(a4),d0
-;    addq.w      #1,d0
-;    move.w      d0,Player_Y(a4)
-;    cmp.w       Player_NextY(a4),d0
-;    bne         .show
-
     ; exit the fall
-    clr.w       ActionStatus(a5)
+    ;clr.w       ActionStatus(a5)
+    clr.w       Player_Fallen(a4)
     clr.w       Player_YDec(a4)
     move.w      Player_NextY(a4),Player_Y(a4)
 
@@ -120,6 +189,7 @@ ActionPlayerFall:
     
     add.w       #PLAYER_SPRITE_FALL_OFFSET,d0
     bsr         ShowSprite
+.exit
     rts
 
 ;----------------------------------------------
@@ -140,6 +210,7 @@ ActionMove:
     subq.w      #1,Player_ActionCount(a4)
     bne         .exit
 
+    ; move done
     clr.w       ActionStatus(a5)
     clr.w       Player_XDec(a4)
     clr.w       Player_YDec(a4)
@@ -147,6 +218,13 @@ ActionMove:
     bsr         PlayerMoveLogic
     bsr         PlayerFallLogic
     
+    bsr         ActorFallAll
+    tst.w       d5
+    beq         .nofall
+
+    move.w      #ACTION_FALL,ActionStatus(a5)
+.nofall
+
     ;move.w      Player_DirectionX(a4),d0
     ;add.w       d0,Player_X(a4)
 .exit
@@ -164,16 +242,16 @@ ActionIdle:
     tst.w       ActionStatus(a5)
     bne         .exit
 
-    bsr         PlayerMoveLogic
-    bsr         PlayerFallLogic
+    ;bsr         PlayerMoveLogic
+    ;bsr         PlayerFallLogic
 
-    bsr         ActorFallAll
-    bsr         PlayerFallLogicFrozen
+    ;bsr         ActorFallAll
+    ;bsr         PlayerFallLogicFrozen
 
-    bsr         ClearMovedActors
-    bsr         ClearFrozenPlayer
-    bsr         DrawMovedActors
-    bsr         DrawMovedPlayer
+    ;bsr         ClearMovedActors
+    ;bsr         ClearFrozenPlayer
+    ;bsr         DrawMovedActors
+    ;bsr         DrawMovedPlayer
 
     bsr         CheckLevelDone
     tst.w       d3
@@ -315,7 +393,6 @@ PlayerFallLogicFrozen:
     clr.b       (a0,d0.w)
     move.b      Player_BlockId(a4),(a0,d1.w)
     move.w      #1,Player_Fallen(a4)
-
 .exit
     POP         a4
     rts
@@ -356,7 +433,8 @@ PlayerFallLogic:
 
     clr.b       (a0,d0.w)
     move.b      Player_BlockId(a4),(a0,d1.w)
-    move.w      #ACTION_PLAYERFALL,ActionStatus(a5)
+    move.w      #1,Player_Fallen(a4)
+    move.w      #ACTION_FALL,ActionStatus(a5)
     clr.w       Player_AnimFrame(a4)
 
     clr.w       Player_ActionFrame(a4)
@@ -552,6 +630,8 @@ PlayerKillEnemy:
     bne         .nokill
     bsr         PlayerDoMove
     bsr         PlayerKillActor
+    bsr         CleanActors
+    bsr         SortActors
 .nokill
     rts
 
@@ -585,8 +665,9 @@ PlayerMoveActor:
     move.w      Player_Y(a4),d1
     add.w       Player_DirectionX(a4),d0
 
-    lea         Actors(a5),a3
+    lea         ActorList(a5),a2
 .loop
+    move.l      (a2)+,a3
     tst.w       Actor_Status(a3)
     beq         .next
     cmp.w       Actor_X(a3),d0
@@ -608,6 +689,7 @@ PlayerMoveActor:
     move.b      (a0,d0.w),(a0,d2.w)    
     clr.b       (a0,d0.w)
 
+    clr.l       Actor_Delta(a3)
     move.w      #ACTION_PLAYERPUSH,ActionStatus(a5)
     move.l      a3,PushedActor(a5)
 
@@ -633,23 +715,30 @@ ActorFallAll:
     bne         .go
     rts
 .go
+    lea         ActorList(a5),a0
+    lea         FallenActors(a5),a2
     subq.w      #1,d7
-    lea         Actors(a5),a3
 .loop
+    move.l      (a0)+,a3
     tst.w       Actor_Status(a3)
     beq         .nofall
     tst.w       Actor_CanFall(a3)
     beq         .nofall
+
+    PUSH        a0
     bsr         ActorFall
+    POP         a0
+
     tst.w       d3
     beq         .nofall
-    add.w       d3,d5
+    add.w       #1,d5
+    move.l      a3,(a2)+
 
 .nofall
-    add.w       #Actor_Sizeof,a3
     dbra        d7,.loop
-    tst.w       d5
-    bne         ActorFallAll
+    move.w      d5,FallenActorsCount(a5)
+    ;tst.w       d5
+    ;bne         ActorFallAll
     rts
 
 
@@ -687,7 +776,9 @@ ActorFall:
     tst.w       d3
     beq         .exit
     add.w       d3,Actor_Y(a3)
-    move.w      #1,Actor_HasMoved(a3)
+    mulu        #24,d3
+    move.w      d3,Actor_FallY(a3)
+    move.w      #1,Actor_HasFalled(a3)
     move.b      (a0,d0.w),(a0,d1.w)
     clr.b       (a0,d0.w)
 .exit
@@ -701,8 +792,9 @@ PlayerKillActor:
     move.w      Player_NextX(a4),d0
     move.w      Player_NextY(a4),d1
 
-    lea         Actors(a5),a3
+    lea         ActorList(a5),a2
 .loop
+    move.l      (a2)+,a3
     tst.w       Actor_Status(a3)
     beq         .next
     cmp.w       Actor_X(a3),d0
@@ -722,7 +814,6 @@ PlayerKillActor:
     bra         .exit                                         ; killed something we are done
 
 .next
-    add.w       #Actor_Sizeof,a3
     dbra        d7,.loop    
 .exit
     rts
@@ -809,7 +900,14 @@ ClearStaticBlock:
 ; d1 = y pixel
 
 ClearActor:
-    PUSHALL
+    PUSHMOST
+    move.w      Actor_PrevX(a3),d0
+    mulu        #24,d0
+    add.w       Actor_XDec(a3),d0
+    move.w      Actor_PrevY(a3),d1
+    mulu        #24,d1
+    add.w       Actor_YDec(a3),d1
+
     lea         ScreenSave,a0
     lea         ScreenStatic,a1
 
@@ -820,10 +918,33 @@ ClearActor:
     add.l       d1,a0                                         ; screen position
     add.l       d1,a1                                         ; screen position
 
-    move.l      #$ffffff00,d1
+    lea         ClearMasks(a5),a2
+    ;moveq       #-1,d1
     and.w       #$f,d0
-    beq         .left
-    move.l      #$00ffffff,d1
+    move.w      d0,d1
+    add.w       d1,d1
+    add.w       d1,d1
+    move.l      (a2,d1.w),d1
+
+    cmp.w       #9,d0
+    bcs         .left
+
+    ; right
+    WAITBLIT
+    move.l      #$7ca<<16,BLTCON0(a6)
+    move.l      d1,BLTAFWM(a6)
+    move.w      #-1,BLTADAT(a6)
+    move.l      a0,BLTBPT(a6)
+    move.l      a1,BLTCPT(a6)
+    move.l      a1,BLTDPT(a6)
+    move.w      #0,BLTAMOD(a6)
+    move.w      #TILE_BLT_MOD-2,BLTBMOD(a6)
+    move.w      #TILE_BLT_MOD-2,BLTCMOD(a6)
+    move.w      #TILE_BLT_MOD-2,BLTDMOD(a6)
+    move.w      #TILE_BLT_SIZE+1,BLTSIZE(a6)
+    POPMOST
+    rts
+
 .left
 
     WAITBLIT
@@ -838,7 +959,7 @@ ClearActor:
     move.w      #TILE_BLT_MOD,BLTCMOD(a6)
     move.w      #TILE_BLT_MOD,BLTDMOD(a6)
     move.w      #TILE_BLT_SIZE,BLTSIZE(a6)
-    POPALL
+    POPMOST
     rts
 
 

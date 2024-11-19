@@ -98,6 +98,7 @@ DrawPlayer:
     rts
     
 Init:
+    bsr        CreateClearMasks
     bsr        KeyboardInit
     bsr        CopperInit
     bsr        GenSpriteMask
@@ -110,6 +111,22 @@ Init:
     move.w     #START_LEVEL,LevelId(a5)
 
     rts
+
+
+
+CreateClearMasks:
+    moveq      #16-1,d7
+    lea        ClearMasks(a5),a0
+    move.l     #$ffffff00,d0
+.loop
+    move.l     d0,(a0)+
+    lsr.l      #1,d0
+    bcc        .under
+    move.w     #$8000,d0
+.under
+    dbra       d7,.loop
+    rts    
+
 
 StartVBlank:
     move.l     #VBlankTick,$6c

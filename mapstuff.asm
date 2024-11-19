@@ -907,9 +907,17 @@ DrawButton:
 
 ; a3 = actors pointer
 DrawActor:
-    PUSHM         d0-d2
+    PUSHMOST
 
-    lea           ScreenSave,a1
+    move.w        Actor_PrevX(a3),d0
+    mulu          #24,d0
+    add.w         Actor_XDec(a3),d0
+
+    move.w        Actor_PrevY(a3),d1
+    mulu          #24,d1
+    add.w         Actor_YDec(a3),d1
+
+    lea           ScreenStatic,a1
     move.w        Actor_SpriteOffset(a3),d2
     
     move.l        TilesetPtr(a5),a0
@@ -927,6 +935,10 @@ DrawActor:
     add.l         d1,a1                                ; screen position
 
     and.w         #$f,d0                               ; shift
+    cmp.w         #8,d0
+    bcs           .thin
+
+    ; fat blit
     ror.w         #4,d0 
     move.w        d0,d1
     or.w          #$fca,d0                             ; minterm
@@ -935,7 +947,32 @@ DrawActor:
     WAITBLIT
     move.w        d0,BLTCON0(a6)
     move.w        d1,BLTCON1(a6)
-    move.l        #-1,BLTAFWM(a6)
+    move.l        #$ffff0000,BLTAFWM(a6)
+    move.l        a2,BLTAPT(a6)
+    move.l        a0,BLTBPT(a6)
+    move.l        a1,BLTCPT(a6)
+    move.l        a1,BLTDPT(a6)
+    move.w        #-2,BLTAMOD(a6)
+    move.w        #-2,BLTBMOD(a6)
+    move.w        #TILE_BLT_MOD-2,BLTCMOD(a6)
+    move.w        #TILE_BLT_MOD-2,BLTDMOD(a6)
+    move.w        #TILE_BLT_SIZE+1,BLTSIZE(a6)
+
+    POPMOST
+    rts
+
+
+
+.thin
+    ror.w         #4,d0 
+    move.w        d0,d1
+    or.w          #$fca,d0                             ; minterm
+
+    ; test tile blit
+    WAITBLIT
+    move.w        d0,BLTCON0(a6)
+    move.w        d1,BLTCON1(a6)
+    move.l        #$ffffffff,BLTAFWM(a6)
     move.l        a2,BLTAPT(a6)
     move.l        a0,BLTBPT(a6)
     move.l        a1,BLTCPT(a6)
@@ -946,7 +983,7 @@ DrawActor:
     move.w        #TILE_BLT_MOD,BLTDMOD(a6)
     move.w        #TILE_BLT_SIZE,BLTSIZE(a6)
 
-    POPM          d0-d2
+    POPMOST       
     rts
 
 

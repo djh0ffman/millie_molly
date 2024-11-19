@@ -34,10 +34,13 @@ Actor_YDec:               rs.w       1
 Actor_DirectionX:         rs.w       1
 Actor_DirectionY:         rs.w       1
 Actor_HasMoved:           rs.w       1
+Actor_HasFalled:          rs.w       1
 Actor_Type:               rs.w       1
 Actor_SpriteOffset:       rs.w       1
 Actor_CanFall:            rs.w       1
 Actor_Static:             rs.w       1
+Actor_Delta               rs.l       1
+Actor_FallY:              rs.w       1
 Actor_Sizeof:             rs.w       0
 
                           RSRESET

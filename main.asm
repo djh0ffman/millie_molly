@@ -42,7 +42,6 @@ Restart:
 
     bsr        Init
 
-    bsr        DrawMap
     bsr        StartVBlank
 .forever
     bra        .forever
@@ -98,9 +97,26 @@ DrawPlayer:
     rts
     
 Init:
-    bsr        CreateClearMasks
+
+    move.w     #0,GameStatus(a5)
     bsr        KeyboardInit
-    bsr        CopperInit
+
+;    bsr        GameCopperInit
+;    bsr        GenSpriteMask
+;    move.l     #cpTest,COP1LC(a6)
+;    move.w     #0,COPJMP1(a6)
+;
+;    move.l     #-1,ScreenMemEnd
+;    move.w     #BASE_DMA,DMACON(a6)
+;
+;    move.w     #START_LEVEL,LevelId(a5)
+;
+    rts
+
+
+
+GameTestInit:
+    bsr        GameCopperInit
     bsr        GenSpriteMask
     move.l     #cpTest,COP1LC(a6)
     move.w     #0,COPJMP1(a6)
@@ -110,9 +126,8 @@ Init:
 
     move.w     #START_LEVEL,LevelId(a5)
 
+    bsr        DrawMap
     rts
-
-
 
 CreateClearMasks:
     moveq      #16-1,d7
@@ -133,6 +148,7 @@ StartVBlank:
     move.w     #INTF_SETCLR|INTF_VERTB|INTF_COPER,INTENA(a6)
     rts
 
+
 VBlankTick:
     PUSHALL
     lea        CUSTOM,a6                   
@@ -141,36 +157,22 @@ VBlankTick:
     move.w     INTREQR(a6),d0
     move.w     d0,d1
     and.w      #INTF_VERTB,d1
-    beq        .novertb
+    beq        .exit
+
     move.w     d1,INTREQ(a6)
     move.w     d1,INTREQ(a6)                                              ; twice to avoid a4k hw bug
 
     addq.w     #1,TickCounter(a5)
 
-    bsr        LevelTest
-    ;bsr        DrawPlayers
+    bsr        GameStatusRun
 
-    bsr        UpdateControls
-
-    move.l     PlayerPtrs(a5),a4
-    bsr        PlayerLogic
-    ;bra        .exit
-
-.novertb
-    ;move.w     d0,d1
-    ;and.w      #INTF_COPER,d1
-    ;beq        .exit    
-    ;move.w     d1,INTREQ(a6)
-    ;move.w     d1,INTREQ(a6)                                    ; twice to avoid a4k hw bug
-
-    ; copper, nothing here!
 .exit
     POPALL
     rte
 
 
 
-CopperInit:
+GameCopperInit:
     move.l     #Screen1,ScreenPtrs(a5)
     move.l     #Screen2,ScreenPtrs+4(a5)
 
@@ -225,6 +227,8 @@ ClearSprites:
     include    "spritetools.asm"
     include    "player.asm"
     include    "controls.asm"
+    include    "title.asm"
+    include    "gamestatus.asm"
 
 ;----------------------------------------------
 ;  data fast
@@ -291,7 +295,40 @@ Shadows:
 LevelFont:
     incbin     "assets/levelfont.bin"
 
+TitleRaw: 
+    incbin     "assets/title_i.raw"
+
+TitlePal:
+    incbin     "assets/title.pal"
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+    dc.w       $f00,$0f0,$00f,$fff
+
     include    "uigfx.asm"
+
+Star32:
+    incbin     "assets/star32.raw"
 
 
 ;----------------------------------------------

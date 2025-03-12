@@ -29,6 +29,7 @@ LevelComplete:        rs.w       1
 ActionStatus:         rs.w       1
 PushedActor:          rs.l       1
 ActionCounter:        rs.w       1
+TitleStars:           rs.l       TITLE_STAR_COUNT
 FallenActors:         rs.l       MAP_SIZE
 FallenActorsCount:    rs.w       1
 ClearMasks:           rs.l       TILE_WIDTH

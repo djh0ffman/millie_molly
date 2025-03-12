@@ -25,6 +25,7 @@ SINE_180                    = SINE_90*2
 SINE_270                    = SINE_90*3
 
 
+TITLE_STAR_COUNT            = 4
 
 WINDOW_START                = (WINDOW_Y_START<<8)|WINDOW_X_START
 WINDOW_STOP                 = (WINDOW_Y_STOP<<8)|WINDOW_X_STOP
@@ -73,7 +74,7 @@ TILE_SCREEN_HEIGHT          = SCREEN_HEIGHT/TILE_HEIGHT
 
 SPRITE_SIZE                 = 4+(TILE_HEIGHT*4)+4
 
-START_LEVEL                 = 17
+START_LEVEL                 = 10
 
 TILE_WALLSINGLE             = 0
 TILE_WALLLEFT               = 1

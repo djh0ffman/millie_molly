@@ -62,15 +62,6 @@ RANDOMWORD         MACRO
 
 
 
-** jump index
-** 1 = index
-
-JMPINDEX           MACRO
-                   add.w      \1,\1
-                   move.w     .\@jmplist(pc,\1.w),\1
-                   jmp        .\@jmplist(pc,\1.w)
-.\@jmplist
-                   ENDM
 
 
 ** Loads planes to existing copper list

@@ -81,7 +81,7 @@
                 "-s",
                 "win32.iconified_pause=false",
             ],
-            "preLaunchTask": ""
+            "preLaunchTask": "build-main"
         },
     ]
 }
